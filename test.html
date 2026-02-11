@@ -39,22 +39,22 @@
 
         // --- STABLE SVG COMPONENTS ---
         const Icons = {
-            Globe: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
             Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
             Scale: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
             Award: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
             Dollar: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-            Refresh: ({ animate }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
-            Settings: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>,
-            Reset: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>,
-            Coins: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
-            X: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-            Info: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
-            Check: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-            Chevron: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-            FilterIcon: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
-            TrendUp: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
-            Target: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            Refresh: ({ animate }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
+            Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>,
+            Reset: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>,
+            Coins: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
+            X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Info: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+            Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Chevron: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+            FilterIcon: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+            Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+            TrendUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         };
 
         // --- MULTI-SELECT COMPONENT ---
@@ -78,14 +78,14 @@
             const displayValue = selected.includes('All') ? (placeholder || `All ${label}s`) : `${selected.length} Selected`;
             return (
                 <div className="relative flex-1" ref={wrapperRef}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-white text-[10px] font-black px-3 py-2 rounded border border-slate-200 uppercase flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-white text-[11px] font-black px-4 py-2.5 rounded border border-slate-200 uppercase flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
                         <span className="truncate mr-2 text-slate-700">{displayValue}</span>
                         <Icons.Chevron />
                     </button>
                     {isOpen && (
                         <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
-                            <div onClick={() => { toggle('All'); setIsOpen(false); }} className={`px-4 py-2.5 text-[10px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50 ${selected.includes('All') ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}>All {label}s {selected.includes('All') && <Icons.Check />}</div>
-                            {options.map(opt => (<div key={opt} onClick={() => toggle(opt)} className={`px-4 py-2.5 text-[10px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50/50 ${selected.includes(opt) ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}><span className="truncate">{opt}</span> {selected.includes(opt) && <Icons.Check />}</div>))}
+                            <div onClick={() => { toggle('All'); setIsOpen(false); }} className={`px-4 py-3 text-[11px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50 ${selected.includes('All') ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}>All {label}s {selected.includes('All') && <Icons.Check />}</div>
+                            {options.map(opt => (<div key={opt} onClick={() => toggle(opt)} className={`px-4 py-3 text-[11px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50/50 ${selected.includes(opt) ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}><span className="truncate">{opt}</span> {selected.includes(opt) && <Icons.Check />}</div>))}
                         </div>
                     )}
                 </div>
@@ -115,42 +115,28 @@
             }).filter(row => {
                 const cycleId = String(row["Cycle ID"] || row["Cycle"] || "").toLowerCase().trim();
                 const strainName = String(row["Strain Name"] || row["Strain"] || "").toLowerCase().trim();
-                // STRICT FILTER: Remove any rows that are explicitly "Total", "Grand Total", or "Summary"
-                // This ensures we hit the ~296.5kg mark by only counting individual room data.
+                // STRICT FILTER: Remove summary/total rows to ensure hit the ~296.5kg mark
                 return cycleId !== "" && 
                        cycleId !== "total" && 
                        cycleId !== "grand total" && 
-                       cycleId !== "summary" &&
-                       strainName !== "total" &&
+                       cycleId !== "summary" && 
+                       strainName !== "total" && 
                        strainName !== "batch average";
             });
         };
 
         const mapCsvToData = (row) => {
             const num = (val) => { if (typeof val === 'number') return val; const parsed = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(parsed) ? 0 : parsed; };
-            
             const findValue = (keys) => {
-                // Find column but EXPLICITLY ignore columns that have the word "total" in the header to prevent picking up summary columns.
-                let key = Object.keys(row).find(k => {
-                    const lk = k.toLowerCase().trim();
-                    return keys.some(target => lk === target.toLowerCase()) && !lk.includes("total");
-                });
-                if (!key) {
-                    key = Object.keys(row).find(k => {
-                        const lk = k.toLowerCase().trim();
-                        return keys.some(target => lk.includes(target.toLowerCase())) && !lk.includes("total");
-                    });
-                }
+                let key = Object.keys(row).find(k => { const lk = k.toLowerCase().trim(); return keys.some(target => lk === target.toLowerCase()) && !lk.includes("total"); });
+                if (!key) { key = Object.keys(row).find(k => { const lk = k.toLowerCase().trim(); return keys.some(target => lk.includes(target.toLowerCase())) && !lk.includes("total"); }); }
                 return key ? row[key] : null;
             };
-
             const a = num(findValue(["flower (a)", "flower a", "premium flower"]));
             const b = num(findValue(["smalls (b)", "smalls b", "smalls"]));
             const c = num(findValue(["trim (c)", "trim c", "trim"]));
             const lights = num(findValue(["lights", "light count"])) || 24;
-            // NUH Calculation: Strict A + B + C
             const net = a + b + c;
-
             return {
                 "Cycle ID": String(row["Cycle ID"] || row["Cycle"] || "N/A"),
                 "Room ID": String(row["Room ID"] || row["Room"] || "N/A"),
@@ -180,7 +166,6 @@
             const [chartMetric, setChartMetric] = useState('gpl');
             const [matrixMetric, setMatrixMetric] = useState('gpl'); 
             
-            // PRICING DEFAULTS ($1800/lb, $1000/lb, $600/lb)
             const [priceA, setPriceA] = useState(3.97);
             const [priceB, setPriceB] = useState(2.20);
             const [priceC, setPriceC] = useState(1.32);
@@ -204,7 +189,6 @@
                     const text = await response.text();
                     const parsed = parseCSV(text).map(mapCsvToData);
                     if (parsed.length > 0) {
-                        // REPLACE: Strictly overwrite state
                         setData([...parsed]);
                         setIsLive(true);
                         setLastSync(new Date().toLocaleTimeString());
@@ -270,11 +254,17 @@
                 return optsCycles.map(c => {
                     const rows = data.filter(d => d["Cycle ID"] === c);
                     const netTotal = rows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
-                    const avgEff = rows.reduce((acc, r) => acc + r["Grams per Light"], 0) / rows.length;
                     const premiumFlower = rows.reduce((acc, r) => acc + r["Flower (A)"], 0);
-                    return { cycle: c, gpl: Number(avgEff.toFixed(1)), quality: netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0 };
+                    const res = { cycle: c, facilityRatio: netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0 };
+                    optsRooms.forEach(room => {
+                        const roomRows = rows.filter(d => d["Room ID"] === room);
+                        const roomNet = roomRows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
+                        const roomPremium = roomRows.reduce((acc, r) => acc + r["Flower (A)"], 0);
+                        if (roomNet > 0) res[room] = Number(((roomPremium / roomNet) * 100).toFixed(1));
+                    });
+                    return res;
                 });
-            }, [data, optsCycles]);
+            }, [data, optsCycles, optsRooms]);
 
             const roomBenchmark = useMemo(() => {
                 const map = {};
@@ -317,72 +307,75 @@
                 <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
                     <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-sm">
                         <div className="max-w-screen-2xl mx-auto">
-                            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
                                 <div className="flex items-center gap-4 pr-6 border-r border-slate-100 shrink-0">
-                                    <div className="bg-emerald-600 p-2 rounded-xl text-white shadow-md"><Icons.Globe /></div>
+                                    <div className="bg-emerald-600 p-2.5 rounded-2xl text-white shadow-md"><Icons.Globe /></div>
                                     <div className="flex flex-col leading-none">
-                                        <h1 className="text-xs font-black italic uppercase text-slate-800 tracking-tighter">Cultivation Intel</h1>
-                                        <div className="flex items-center gap-1.5 mt-1.5 leading-none">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
-                                            <p className="text-[9px] font-black uppercase text-slate-400 leading-none">{isLive ? `Live Sync (${lastSync})` : 'Offline'}</p>
+                                        <h1 className="text-sm font-black italic uppercase text-slate-800 tracking-tighter">Cultivation Intel</h1>
+                                        <div className="flex items-center gap-2 mt-1.5 leading-none">
+                                            <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 leading-none">{isLive ? `Live Sync (${lastSync})` : 'Offline'}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-slate-100/50 px-3 py-1.5 rounded-xl border border-slate-200 shadow-inner shrink-0">
+
+                                <div className="flex items-center gap-6 bg-slate-100/50 px-6 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[380px]">
                                     <Icons.Coins />
-                                    {[{l: 'A', v: priceA, s: setPriceA}, {l: 'S', v: priceB, s: setPriceB}, {l: 'T', v: priceC, s: setPriceC}].map(p => (
-                                        <div key={p.l} className="flex items-center gap-1.5">
-                                            <span className="text-[9px] font-black text-slate-400">{p.l}:</span>
-                                            <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded px-1.5 py-1 text-[11px] font-bold w-12 outline-none focus:border-emerald-500" />
+                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls', v: priceB, s: setPriceB}, {l: 'Trim', v: priceC, s: setPriceC}].map(p => (
+                                        <div key={p.l} className="flex flex-col gap-1">
+                                            <span className="text-[11px] font-black text-slate-500 uppercase leading-none tracking-tight">{p.l}:</span>
+                                            <div className="flex items-center">
+                                                <span className="text-slate-400 text-xs mr-0.5">$</span>
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-2.5 py-1.5 text-sm font-black w-24 outline-none focus:border-emerald-500 shadow-sm" />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex items-center gap-2 flex-1 justify-center max-w-lg shrink-0">
+
+                                <div className="flex items-center gap-2 flex-1 justify-center max-w-xl shrink-0">
                                     <MultiSelect label="Cycle" options={optsCycles} selected={selCycles} onChange={setSelCycles} />
                                     <MultiSelect label="Room" options={optsRooms} selected={selRooms} onChange={setSelRooms} />
                                     <MultiSelect label="Strain" options={optsStrains} selected={selStrains} onChange={setSelStrains} />
                                 </div>
-                                <div className="flex items-center gap-2.5 shrink-0">
-                                    <button onClick={() => { setSelCycles(['All']); setSelRooms(['All']); setSelStrains(['All']); }} className="text-slate-300 p-1.5 hover:bg-slate-100 rounded-lg transition-all" title="Clear Filters"><Icons.Reset /></button>
-                                    <button onClick={() => autoFetch(sheetUrl)} disabled={isLoading || !sheetUrl} className="bg-slate-900 text-white p-2.5 rounded-xl hover:bg-slate-800 disabled:opacity-30 shadow-md active:scale-95 transition-all"><Icons.Refresh animate={isLoading} /></button>
-                                    <button onClick={() => setShowSyncModal(true)} className="bg-emerald-600 text-white p-2.5 rounded-xl hover:bg-emerald-700 shadow-md active:scale-95 transition-all"><Icons.Settings /></button>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <button onClick={() => { setSelCycles(['All']); setSelRooms(['All']); setSelStrains(['All']); }} className="text-slate-300 p-2 hover:bg-slate-100 rounded-xl transition-all" title="Clear Filters"><Icons.Reset /></button>
+                                    <button onClick={() => autoFetch(sheetUrl)} disabled={isLoading || !sheetUrl} className="bg-slate-900 text-white p-3 rounded-2xl hover:bg-slate-800 disabled:opacity-30 shadow-md active:scale-95 transition-all"><Icons.Refresh animate={isLoading} /></button>
+                                    <button onClick={() => setShowSyncModal(true)} className="bg-emerald-600 text-white p-3 rounded-2xl hover:bg-emerald-700 shadow-md active:scale-95 transition-all"><Icons.Settings /></button>
                                 </div>
                             </div>
-                            <div className="mt-2 flex items-center gap-2 border-t border-slate-50 pt-1.5">
-                                <div className="bg-slate-100 p-1 rounded text-slate-400"><Icons.FilterIcon /></div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 truncate max-w-5xl italic leading-none">{activeFilterSummary}</p>
+                            <div className="mt-2.5 flex items-center gap-2 border-t border-slate-50 pt-2">
+                                <div className="bg-slate-100 p-1.5 rounded-lg text-slate-400 shadow-sm"><Icons.FilterIcon /></div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate max-w-5xl italic leading-none">{activeFilterSummary}</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="max-w-screen-2xl mx-auto p-4 md:p-8">
-                        {/* KPI SECTION */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                             {[
                                 { label: "Net Usable Harvest", val: stats.kg, unit: "kg", sub: `${stats.lbs} lbs`, icon: Icons.Scale, color: "bg-emerald-500" },
                                 { label: "Efficiency (GPL)", val: stats.gpl, unit: "GPL", sub: "Grams / Light", icon: Icons.Zap, color: "bg-blue-500" },
-                                { label: "Quality Mix", val: stats.quality, unit: "%", sub: "Ratio to Usable", icon: Icons.Award, color: "bg-amber-500" },
+                                { label: "Premium Ratio", val: stats.quality, unit: "%", sub: "Ratio to Usable", icon: Icons.Award, color: "bg-amber-500" },
                                 { label: "Gross Revenue", val: `$${stats.revenue}`, unit: "", sub: "Live Valuation", icon: Icons.Dollar, color: "bg-purple-500" }
                             ].map((kpi, i) => (
-                                <div key={i} className="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between group">
+                                <div key={i} className="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group">
                                     <div>
-                                        <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">{kpi.label}</p>
+                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">{kpi.label}</p>
                                         <h3 className="text-3xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-xs font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
-                                        <p className="text-[10px] text-slate-300 font-bold mt-2 uppercase tracking-widest leading-none">{kpi.sub}</p>
+                                        <p className="text-[11px] text-slate-300 font-bold mt-2 uppercase tracking-widest leading-none">{kpi.sub}</p>
                                     </div>
-                                    <div className={`p-4 rounded-xl ${kpi.color} text-white shadow-lg`}><kpi.icon /></div>
+                                    <div className={`p-5 rounded-2xl ${kpi.color} text-white shadow-lg shadow-inner`}><kpi.icon /></div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* ROW 1 */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                             <div className="lg:col-span-2 bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-center">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 text-left">
                                     <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic leading-none">Performance metrics per cultivar (Filtered View)</p></div>
-                                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                    <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-sm">
                                         {['yield', 'gpl'].map(m => (
-                                            <button key={m} onClick={() => setChartMetric(m)} className={`px-5 py-2 text-[9px] font-black rounded-lg transition-all uppercase tracking-widest ${chartMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
+                                            <button key={m} onClick={() => setChartMetric(m)} className={`px-6 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${chartMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -390,47 +383,50 @@
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }} angle={-45} textAnchor="end" />
+                                            <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} angle={-45} textAnchor="end" />
                                             <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} domain={chartMetric === 'gpl' ? [0, 200] : [0, 'auto']} />
                                             <Tooltip />
-                                            <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={32}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
+                                            <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={32}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
                             <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center">
                                 <div className="flex items-center justify-between mb-8 text-left leading-none">
-                                    <div><h2 className="text-xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Flower Ratio</h2><p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mt-1.5 italic">Flower A vs Total Usable Output (%)</p></div>
-                                    <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600"><Icons.TrendUp /></div>
+                                    <div><h2 className="text-xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Flower Ratio</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Flower A (%) by Room & Facility Average</p></div>
+                                    <div className="bg-emerald-50 p-2.5 rounded-2xl text-emerald-600"><Icons.TrendUp /></div>
                                 </div>
                                 <div className="h-[300px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={cycleTrendData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="cycle" tick={{fontSize: 9, fontWeight: 900}} axisLine={false} />
-                                            <YAxis tick={{fontSize: 9}} domain={[0, 100]} axisLine={false} />
+                                            <XAxis dataKey="cycle" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} />
+                                            <YAxis tick={{fontSize: 10}} domain={[0, 100]} axisLine={false} unit="%" />
                                             <Tooltip />
-                                            <Line type="monotone" dataKey="quality" name="Flower A Ratio (%)" stroke="#10b981" strokeWidth={4} dot={{ r: 4 }} />
+                                            <Legend verticalAlign="top" height={36}/>
+                                            {optsRooms.map((room, i) => (
+                                                <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
+                                            ))}
+                                            <Line type="monotone" dataKey="facilityRatio" name="FACILITY AVG" stroke="#0f172a" strokeWidth={5} dot={{ r: 5, fill: '#0f172a' }} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
 
-                        {/* ROW 2: Dynamic Room Rankings */}
                         <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden mb-10 text-center">
                             <div className="flex items-center justify-between mb-8 text-left leading-none">
                                 <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Dynamic Room Power Rankings</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic leading-none">Average efficiency based on active filters (Cycle/Strain selected)</p></div>
-                                <div className="bg-blue-50 p-2 rounded-xl text-blue-600 shadow-sm"><Icons.Target /></div>
+                                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 shadow-sm shadow-blue-100"><Icons.Target /></div>
                             </div>
-                            <div className="h-[300px] w-full">
+                            <div className="h-[350px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={roomBenchmark} margin={{ left: 40, bottom: 40 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} domain={[0, 200]} />
+                                        <XAxis dataKey="name" tick={{fontSize: 11, fontWeight: 900}} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{fontSize: 11}} axisLine={false} tickLine={false} domain={[0, 200]} />
                                         <Tooltip formatter={(v) => `${v} GPL`}/>
-                                        <Bar dataKey="value" name="Avg Efficiency (GPL)" radius={[10, 10, 0, 0]} barSize={40}>
+                                        <Bar dataKey="value" name="Avg Efficiency (GPL)" radius={[12, 12, 0, 0]} barSize={48}>
                                             {roomBenchmark.map((_, i) => <Cell key={i} fill={COLORS[(i+2) % COLORS.length]} />)}
                                         </Bar>
                                     </BarChart>
@@ -438,13 +434,12 @@
                             </div>
                         </div>
 
-                        {/* MATRIX WITH TOGGLE */}
                         <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-20">
                             <div className="px-10 py-12 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
                                 <div className="leading-none text-left"><h2 className="text-3xl font-black italic uppercase tracking-tighter">Facility Yield Matrix</h2><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 italic leading-none">Switch between Efficiency and Total Weight output per profile</p></div>
-                                <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm shrink-0">
-                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-5 py-2 text-[9px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
-                                    <button onClick={() => setMatrixMetric('yield')} className={`px-5 py-2 text-[9px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg)</button>
+                                <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-6 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-6 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg)</button>
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
@@ -457,7 +452,7 @@
                                                 {optsRooms.map(r => {
                                                     const val = row[r] || '-';
                                                     const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
-                                                    return (<td key={r} className="px-10 py-7 text-center"><div className={`inline-block px-4 py-2 rounded-xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
+                                                    return (<td key={r} className="px-10 py-7 text-center"><div className={`inline-block px-5 py-2.5 rounded-2xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
                                                 })}
                                             </tr>
                                         ))}
@@ -469,20 +464,20 @@
 
                     {showSyncModal && (
                         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                            <div className="bg-white rounded-[3.5rem] p-10 max-w-xl w-full shadow-2xl relative border border-white/10 text-center">
+                            <div className="bg-white rounded-[4rem] p-12 max-w-xl w-full shadow-2xl relative border border-white/10 text-center">
                                 <button onClick={() => setShowSyncModal(false)} className="absolute top-10 right-10 text-slate-300 hover:text-slate-500 transition-colors"><Icons.X /></button>
                                 <h2 className="text-3xl font-black mb-6 uppercase italic text-emerald-600 tracking-tighter leading-none">System Logic Setup</h2>
                                 {syncStatus && <div className={`mb-4 p-4 rounded-xl text-[10px] font-black uppercase border transition-all ${syncStatus.includes('Error') ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse'}`}>{syncStatus}</div>}
                                 <div className="bg-slate-50 p-8 rounded-3xl mb-8 text-xs text-slate-600 border border-slate-200 leading-relaxed text-left shadow-inner overflow-hidden">
                                     <div className="flex items-center gap-2 mb-4 font-black uppercase italic text-slate-800 border-b pb-2"><Icons.Info /> Integration Guide</div>
-                                    <ol className="space-y-2 ml-1 font-bold list-decimal list-inside opacity-70 italic leading-relaxed text-[11px]"><li>Google Sheet &gt; <strong>File &gt; Publish to web</strong>.</li><li>Select <strong>PRODUCTION_LOG</strong> tab as <strong>CSV</strong>.</li><li>Paste link below.</li></ol>
+                                    <ol className="space-y-2 ml-1 font-bold list-decimal list-inside opacity-70 italic leading-relaxed text-[11px]"><li>Go to Google Sheet &gt; <strong>File &gt; Publish to web</strong>.</li><li>Select <strong>PRODUCTION_LOG</strong> tab as <strong>CSV</strong>.</li><li>Paste link below.</li></ol>
                                     <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
                                         <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Sample Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
                                         <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Real Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
                                     </div>
                                 </div>
-                                <input type="text" placeholder="Paste link..." className="w-full border-2 border-slate-200 p-5 rounded-2xl mb-8 focus:border-emerald-500 outline-none text-[11px] font-bold shadow-inner bg-slate-50/50 text-center" value={sheetUrl} onChange={e => setSheetUrl(e.target.value)} />
-                                <button onClick={handleInitialize} disabled={isLoading || !sheetUrl} className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 uppercase tracking-widest shadow-2xl transition-all active:scale-95 leading-none">{isLoading ? <Icons.Refresh animate={true} /> : <div className="bg-emerald-400 p-1.5 rounded-full shadow-sm"><Icons.Check /></div>}{isLoading ? "Syncing Platform..." : "Lock & Initialize System"}</button>
+                                <input type="text" placeholder="Paste link..." className="w-full border-2 border-slate-200 p-5 rounded-3xl mb-8 focus:border-emerald-500 outline-none text-sm font-bold shadow-inner bg-slate-50/50 text-center" value={sheetUrl} onChange={e => setSheetUrl(e.target.value)} />
+                                <button onClick={handleInitialize} disabled={isLoading || !sheetUrl} className="w-full bg-slate-900 text-white font-black py-6 rounded-3xl flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 uppercase tracking-widest shadow-2xl transition-all active:scale-95 leading-none">{isLoading ? <Icons.Refresh animate={true} /> : <div className="bg-emerald-400 p-1.5 rounded-full shadow-sm"><Icons.Check /></div>}{isLoading ? "Syncing Platform..." : "Lock & Initialize System"}</button>
                             </div>
                         </div>
                     )}
