@@ -25,6 +25,8 @@
         .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
             stroke: #f1f5f9;
         }
+        .performance-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .performance-card:hover { transform: translateY(-4px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -34,7 +36,8 @@
         const { useState, useMemo, useEffect, useRef } = React;
         const { 
             BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-            Cell, PieChart, Pie, LineChart, Line, Legend, ScatterChart, Scatter, ZAxis, AreaChart, Area
+            Cell, PieChart, Pie, LineChart, Line, Legend, ScatterChart, Scatter, ZAxis, AreaChart, Area,
+            ReferenceLine, ComposedChart
         } = Recharts;
 
         // --- STABLE SVG COMPONENTS ---
@@ -54,7 +57,10 @@
             Chevron: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             FilterIcon: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
             Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-            TrendUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            TrendUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+            Crown: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
+            Eye: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            EyeOff: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
         };
 
         // --- MULTI-SELECT COMPONENT ---
@@ -84,7 +90,7 @@
                     </button>
                     {isOpen && (
                         <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
-                            <div onClick={() => { toggle('All'); setIsOpen(false); }} className={`px-4 py-3 text-[11px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50 ${selected.includes('All') ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}>All {label}s {selected.includes('All') && <Icons.Check />}</div>
+                            <div onClick={() => { toggle('All'); setIsOpen(false); }} className={`px-4 py-3 text-[11px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50 hover:bg-slate-50`}>All {label}s {selected.includes('All') && <Icons.Check />}</div>
                             {options.map(opt => (<div key={opt} onClick={() => toggle(opt)} className={`px-4 py-3 text-[11px] font-bold uppercase cursor-pointer flex items-center justify-between border-b border-slate-50/50 ${selected.includes(opt) ? 'bg-emerald-50 text-emerald-600' : 'hover:bg-slate-50'}`}><span className="truncate">{opt}</span> {selected.includes(opt) && <Icons.Check />}</div>))}
                         </div>
                     )}
@@ -115,13 +121,8 @@
             }).filter(row => {
                 const cycleId = String(row["Cycle ID"] || row["Cycle"] || "").toLowerCase().trim();
                 const strainName = String(row["Strain Name"] || row["Strain"] || "").toLowerCase().trim();
-                // STRICT FILTER: Remove summary/total rows to ensure hit the ~296.5kg mark
-                return cycleId !== "" && 
-                       cycleId !== "total" && 
-                       cycleId !== "grand total" && 
-                       cycleId !== "summary" && 
-                       strainName !== "total" && 
-                       strainName !== "batch average";
+                // STRICT FILTER: remove summary lines to hit ~296.5kg NUH mark
+                return cycleId !== "" && cycleId !== "total" && cycleId !== "grand total" && cycleId !== "summary" && strainName !== "total" && strainName !== "batch average";
             });
         };
 
@@ -136,15 +137,14 @@
             const b = num(findValue(["smalls (b)", "smalls b", "smalls"]));
             const c = num(findValue(["trim (c)", "trim c", "trim"]));
             const lights = num(findValue(["lights", "light count"])) || 24;
-            const net = a + b + c;
             return {
                 "Cycle ID": String(row["Cycle ID"] || row["Cycle"] || "N/A"),
                 "Room ID": String(row["Room ID"] || row["Room"] || "N/A"),
                 "Strain Name": String(row["Strain Name"] || row["Strain"] || "Unknown"),
                 "Plant Count": num(findValue(["plant count", "plants"])) || 1,
-                "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": net,
+                "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": a + b + c,
                 "Flower Days": num(findValue(["flower days", "days in flower", "days"])),
-                "Lights": lights, "Grams per Light": Number((net / lights).toFixed(2))
+                "Lights": lights, "Grams per Light": Number(((a + b + c) / lights).toFixed(2))
             };
         };
 
@@ -166,6 +166,11 @@
             const [chartMetric, setChartMetric] = useState('gpl');
             const [matrixMetric, setMatrixMetric] = useState('gpl'); 
             
+            // --- NEW CARD STATES ---
+            const [leaderboardSort, setLeaderboardSort] = useState('gpl');
+            const [mixChartView, setMixChartView] = useState('ratio'); // ratio, volume, gpl
+            const [showRoomDetailsInMix, setShowRoomDetailsInMix] = useState(true);
+
             const [priceA, setPriceA] = useState(3.97);
             const [priceB, setPriceB] = useState(2.20);
             const [priceC, setPriceC] = useState(1.32);
@@ -255,27 +260,62 @@
                     const rows = data.filter(d => d["Cycle ID"] === c);
                     const netTotal = rows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
                     const premiumFlower = rows.reduce((acc, r) => acc + r["Flower (A)"], 0);
-                    const res = { cycle: c, facilityRatio: netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0 };
+                    
+                    // Facility Aggregates
+                    const ratioValue = netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0;
+                    const volumeValue = Number((premiumFlower / 1000).toFixed(1));
+                    const gplValue = Number((netTotal / (rows.reduce((acc, r) => acc + r["Lights"], 0) || 1)).toFixed(2));
+
+                    const res = { 
+                        cycle: c, 
+                        facilityRatio: ratioValue,
+                        facilityVolume: volumeValue,
+                        facilityGpl: gplValue
+                    };
+
                     optsRooms.forEach(room => {
                         const roomRows = rows.filter(d => d["Room ID"] === room);
                         const roomNet = roomRows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
                         const roomPremium = roomRows.reduce((acc, r) => acc + r["Flower (A)"], 0);
-                        if (roomNet > 0) res[room] = Number(((roomPremium / roomNet) * 100).toFixed(1));
+                        const roomLights = roomRows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
+                        
+                        if (roomNet > 0) {
+                            if (mixChartView === 'ratio') res[room] = Number(((roomPremium / roomNet) * 100).toFixed(1));
+                            else if (mixChartView === 'volume') res[room] = Number((roomPremium / 1000).toFixed(1));
+                            else res[room] = Number((roomNet / roomLights).toFixed(1));
+                        }
                     });
+
+                    if (mixChartView === 'volume') res.facilityValue = res.facilityVolume;
+                    else if (mixChartView === 'ratio') res.facilityValue = res.facilityRatio;
+                    else res.facilityValue = res.facilityGpl;
+
                     return res;
                 });
-            }, [data, optsCycles, optsRooms]);
+            }, [data, optsCycles, optsRooms, mixChartView]);
 
             const roomBenchmark = useMemo(() => {
                 const map = {};
                 filteredData.forEach(d => {
                     const r = d["Room ID"];
-                    if (!map[r]) map[r] = { name: r, gplSum: 0, count: 0 };
+                    if (!map[r]) map[r] = { name: r, gplSum: 0, premiumSum: 0, usableSum: 0, lightSum: 0, revSum: 0, count: 0 };
                     map[r].gplSum += d["Grams per Light"];
+                    map[r].premiumSum += d["Flower (A)"];
+                    map[r].usableSum += d["Total Yield (G)"];
+                    map[r].lightSum += d["Lights"];
+                    map[r].revSum += (d["Flower (A)"] * priceA) + (d["Smalls (B)"] * priceB) + (d["Trim (C)"] * priceC);
                     map[r].count += 1;
                 });
-                return Object.values(map).map(m => ({ name: m.name, value: Number((m.gplSum / m.count).toFixed(2)) })).sort((a,b) => b.value - a.value);
-            }, [filteredData]);
+                return Object.values(map).map(m => ({ 
+                    name: m.name, 
+                    gpl: Number((m.gplSum / m.count).toFixed(2)),
+                    mix: m.usableSum > 0 ? Number(((m.premiumSum / m.usableSum) * 100).toFixed(1)) : 0,
+                    rpl: m.lightSum > 0 ? Number((m.revSum / m.lightSum).toFixed(2)) : 0
+                })).map(item => ({
+                    ...item,
+                    sortVal: leaderboardSort === 'mix' ? item.mix : leaderboardSort === 'rpl' ? item.rpl : item.gpl
+                })).sort((a,b) => b.sortVal - a.sortVal);
+            }, [filteredData, leaderboardSort, priceA, priceB, priceC]);
 
             const strainRoomMatrix = useMemo(() => {
                 const strains = selStrains.includes('All') ? optsStrains : selStrains;
@@ -319,14 +359,14 @@
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-6 bg-slate-100/50 px-6 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[380px]">
+                                <div className="flex items-center gap-8 bg-slate-100/50 px-10 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[500px]">
                                     <Icons.Coins />
-                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls', v: priceB, s: setPriceB}, {l: 'Trim', v: priceC, s: setPriceC}].map(p => (
-                                        <div key={p.l} className="flex flex-col gap-1">
-                                            <span className="text-[11px] font-black text-slate-500 uppercase leading-none tracking-tight">{p.l}:</span>
+                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
+                                        <div key={p.l} className="flex flex-col gap-1.5 flex-1">
+                                            <span className="text-[11px] font-black text-slate-600 uppercase leading-none tracking-tight whitespace-nowrap">{p.l}:</span>
                                             <div className="flex items-center">
-                                                <span className="text-slate-400 text-xs mr-0.5">$</span>
-                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-2.5 py-1.5 text-sm font-black w-24 outline-none focus:border-emerald-500 shadow-sm" />
+                                                <span className="text-slate-400 text-sm font-bold mr-1">$</span>
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1.5 text-sm font-black w-full outline-none focus:border-emerald-500 shadow-sm" />
                                             </div>
                                         </div>
                                     ))}
@@ -351,14 +391,15 @@
                     </div>
 
                     <div className="max-w-screen-2xl mx-auto p-4 md:p-8">
+                        {/* KPI SECTION */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                             {[
                                 { label: "Net Usable Harvest", val: stats.kg, unit: "kg", sub: `${stats.lbs} lbs`, icon: Icons.Scale, color: "bg-emerald-500" },
                                 { label: "Efficiency (GPL)", val: stats.gpl, unit: "GPL", sub: "Grams / Light", icon: Icons.Zap, color: "bg-blue-500" },
-                                { label: "Premium Ratio", val: stats.quality, unit: "%", sub: "Ratio to Usable", icon: Icons.Award, color: "bg-amber-500" },
+                                { label: "Premium Flower Mix", val: stats.quality, unit: "%", sub: "Ratio to Usable", icon: Icons.Award, color: "bg-amber-500" },
                                 { label: "Gross Revenue", val: `$${stats.revenue}`, unit: "", sub: "Live Valuation", icon: Icons.Dollar, color: "bg-purple-500" }
                             ].map((kpi, i) => (
-                                <div key={i} className="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group">
+                                <div key={i} className="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group performance-card">
                                     <div>
                                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">{kpi.label}</p>
                                         <h3 className="text-3xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-xs font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
@@ -369,13 +410,14 @@
                             ))}
                         </div>
 
+                        {/* ROW 1: Genetic Benchmarking & Premium Market Mix */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                            <div className="lg:col-span-2 bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-center">
+                            <div className="lg:col-span-2 bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-center performance-card">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 text-left">
                                     <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic leading-none">Performance metrics per cultivar (Filtered View)</p></div>
-                                    <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+                                    <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
                                         {['yield', 'gpl'].map(m => (
-                                            <button key={m} onClick={() => setChartMetric(m)} className={`px-6 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${chartMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
+                                            <button key={m} onClick={() => setChartMetric(m)} className={`px-6 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${chartMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -391,68 +433,150 @@
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-                            <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center">
-                                <div className="flex items-center justify-between mb-8 text-left leading-none">
-                                    <div><h2 className="text-xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Flower Ratio</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Flower A (%) by Room & Facility Average</p></div>
-                                    <div className="bg-emerald-50 p-2.5 rounded-2xl text-emerald-600"><Icons.TrendUp /></div>
+
+                            {/* PREMIUM MARKET MIX CHART (STRENGTHENED VISUALS) */}
+                            <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center performance-card overflow-hidden">
+                                <div className="flex flex-col gap-4 mb-8">
+                                    <div className="flex items-center justify-between text-left leading-none">
+                                        <div><h2 className="text-xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Market Mix</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Performance vs Top-Tier Benchmark</p></div>
+                                        <button onClick={() => setShowRoomDetailsInMix(!showRoomDetailsInMix)} className={`p-2 rounded-xl transition-all ${showRoomDetailsInMix ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
+                                            {showRoomDetailsInMix ? <Icons.EyeOff /> : <Icons.Eye />}
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100 self-start">
+                                        <button onClick={() => setMixChartView('ratio')} className={`px-4 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${mixChartView === 'ratio' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400'}`}>Ratio (%)</button>
+                                        <button onClick={() => setMixChartView('volume')} className={`px-4 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${mixChartView === 'volume' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400'}`}>Volume (Kg)</button>
+                                        <button onClick={() => setMixChartView('gpl')} className={`px-4 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${mixChartView === 'gpl' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400'}`}>GPL</button>
+                                    </div>
                                 </div>
-                                <div className="h-[300px] w-full">
+                                <div className="h-[280px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={cycleTrendData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="cycle" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} />
-                                            <YAxis tick={{fontSize: 10}} domain={[0, 100]} axisLine={false} unit="%" />
+                                        <ComposedChart data={cycleTrendData}>
+                                            <defs>
+                                                <linearGradient id="colorMix" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                            <XAxis dataKey="cycle" tick={{fontSize: 9, fontWeight: 900}} axisLine={false} />
+                                            <YAxis 
+                                                tick={{fontSize: 9}} 
+                                                domain={mixChartView === 'ratio' ? [50, 100] : [0, 'auto']} 
+                                                axisLine={false} 
+                                                unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} 
+                                            />
                                             <Tooltip />
                                             <Legend verticalAlign="top" height={36}/>
-                                            {optsRooms.map((room, i) => (
-                                                <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
+                                            
+                                            {/* Facility Area in Background */}
+                                            <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" />
+                                            
+                                            {/* Target Benchmark - Top Layer */}
+                                            {mixChartView === 'ratio' && (
+                                                <ReferenceLine 
+                                                    y={80} 
+                                                    stroke="#f43f5e" 
+                                                    strokeWidth={2} 
+                                                    strokeDasharray="3 3" 
+                                                    label={{ position: 'right', value: 'TARGET (80%)', fill: '#f43f5e', fontSize: 10, fontWeight: 900 }} 
+                                                />
+                                            )}
+
+                                            {/* Room Lines on top of Area */}
+                                            {showRoomDetailsInMix && optsRooms.map((room, i) => (
+                                                <Line 
+                                                    key={room} 
+                                                    type="monotone" 
+                                                    dataKey={room} 
+                                                    name={room} 
+                                                    stroke="#94a3b8" 
+                                                    strokeWidth={1.5} 
+                                                    strokeDasharray="4 4" 
+                                                    dot={{ r: 2 }} 
+                                                    opacity={0.8} 
+                                                />
                                             ))}
-                                            <Line type="monotone" dataKey="facilityRatio" name="FACILITY AVG" stroke="#0f172a" strokeWidth={5} dot={{ r: 5, fill: '#0f172a' }} />
-                                        </LineChart>
+                                        </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden mb-10 text-center">
-                            <div className="flex items-center justify-between mb-8 text-left leading-none">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Dynamic Room Power Rankings</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic leading-none">Average efficiency based on active filters (Cycle/Strain selected)</p></div>
-                                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 shadow-sm shadow-blue-100"><Icons.Target /></div>
+                        {/* ROW 2: ENHANCED FACILITY LEADERBOARD (STRENGTHENED VISUALS) */}
+                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden mb-10 text-center performance-card">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 text-left leading-none gap-6">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic leading-none">High-Performance Rooms ranked by Efficiency, Quality, or Value</p></div>
+                                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase px-3">Sort by:</span>
+                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-5 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL</button>
+                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-5 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Mix (%)</button>
+                                    <button onClick={() => setLeaderboardSort('rpl')} className={`px-5 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'rpl' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Value ($)</button>
+                                </div>
                             </div>
-                            <div className="h-[350px] w-full">
+                            <div className="h-[450px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={roomBenchmark} margin={{ left: 40, bottom: 40 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="name" tick={{fontSize: 11, fontWeight: 900}} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{fontSize: 11}} axisLine={false} tickLine={false} domain={[0, 200]} />
-                                        <Tooltip formatter={(v) => `${v} GPL`}/>
-                                        <Bar dataKey="value" name="Avg Efficiency (GPL)" radius={[12, 12, 0, 0]} barSize={48}>
-                                            {roomBenchmark.map((_, i) => <Cell key={i} fill={COLORS[(i+2) % COLORS.length]} />)}
+                                    <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 100 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
+                                        <XAxis type="number" domain={[0, 200]} hide />
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 14, fontWeight: 900, fill: '#1e293b'}} width={80} axisLine={false} tickLine={false} />
+                                        <Tooltip cursor={{fill: '#f8fafc'}} content={({active, payload}) => {
+                                            if (active && payload && payload.length) {
+                                                const d = payload[0].payload;
+                                                return (
+                                                    <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-2xl border border-slate-800 min-w-[180px]">
+                                                        <div className="flex items-center gap-2 mb-2 border-b border-white/10 pb-2">
+                                                            <Icons.Crown />
+                                                            <p className="text-xs font-black uppercase">{d.name}</p>
+                                                        </div>
+                                                        <div className="space-y-1.5 text-left">
+                                                            <p className="text-[10px] flex justify-between gap-4"><span className="text-slate-400">EFFICIENCY:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
+                                                            <p className="text-[10px] flex justify-between gap-4"><span className="text-slate-400">MARKET MIX:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
+                                                            <p className="text-[10px] flex justify-between gap-4"><span className="text-slate-400">VALUE / LIGHT:</span> <span className="font-black text-purple-400">${d.rpl}</span></p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}/>
+                                        
+                                        {/* Target Efficiency Line for context */}
+                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 10, fontWeight: 900 }} />
+
+                                        <Bar dataKey="sortVal" name="Score" radius={[0, 15, 15, 0]} barSize={40}>
+                                            {roomBenchmark.map((entry, i) => (
+                                                <Cell key={i} fill={
+                                                    i === 0 ? '#10b981' : 
+                                                    entry.sortVal > (leaderboardSort === 'mix' ? 75 : leaderboardSort === 'rpl' ? 250 : 90) ? '#3b82f6' : 
+                                                    entry.sortVal > (leaderboardSort === 'mix' ? 50 : leaderboardSort === 'rpl' ? 150 : 60) ? '#f59e0b' : '#f43f5e'
+                                                } />
+                                            ))}
                                         </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-20">
+                        {/* MATRIX WITH DUAL VIEW */}
+                        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card">
                             <div className="px-10 py-12 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
-                                <div className="leading-none text-left"><h2 className="text-3xl font-black italic uppercase tracking-tighter">Facility Yield Matrix</h2><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 italic leading-none">Switch between Efficiency and Total Weight output per profile</p></div>
-                                <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm shrink-0">
-                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-6 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
-                                    <button onClick={() => setMatrixMetric('yield')} className={`px-6 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg)</button>
+                                <div className="leading-none text-left"><h2 className="text-3xl font-black italic uppercase tracking-tighter">Facility Yield Matrix</h2><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 italic leading-none">Toggle between High-Efficiency (GPL) and Raw Output (Total Kg)</p></div>
+                                <div className="flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg)</button>
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
-                                    <thead><tr className="text-[10px] uppercase font-black tracking-widest text-slate-300 bg-slate-50/50"><th className="px-10 py-8 border-b border-slate-100 text-slate-500 text-sm">Genetic Profile</th>{optsRooms.map(r => <th key={r} className="px-10 py-8 text-center border-b border-slate-100 text-slate-500 text-sm">{r}</th>)}</tr></thead>
+                                    <thead><tr className="text-[11px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-10 py-8 border-b border-slate-100 text-slate-500">Genetic Archetype</th>{optsRooms.map(r => <th key={r} className="px-10 py-8 text-center border-b border-slate-100 text-slate-500">{r}</th>)}</tr></thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {strainRoomMatrix.map((row, i) => (
                                             <tr key={i} className="hover:bg-slate-50 group transition-colors">
-                                                <td className="px-10 py-7 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-xs tracking-tight">{row.strain}</td>
+                                                <td className="px-10 py-8 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-sm tracking-tight">{row.strain}</td>
                                                 {optsRooms.map(r => {
                                                     const val = row[r] || '-';
                                                     const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
-                                                    return (<td key={r} className="px-10 py-7 text-center"><div className={`inline-block px-5 py-2.5 rounded-2xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
+                                                    return (<td key={r} className="px-10 py-8 text-center"><div className={`inline-block px-5 py-2.5 rounded-2xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
                                                 })}
                                             </tr>
                                         ))}
@@ -466,18 +590,18 @@
                         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
                             <div className="bg-white rounded-[4rem] p-12 max-w-xl w-full shadow-2xl relative border border-white/10 text-center">
                                 <button onClick={() => setShowSyncModal(false)} className="absolute top-10 right-10 text-slate-300 hover:text-slate-500 transition-colors"><Icons.X /></button>
-                                <h2 className="text-3xl font-black mb-6 uppercase italic text-emerald-600 tracking-tighter leading-none">System Logic Setup</h2>
-                                {syncStatus && <div className={`mb-4 p-4 rounded-xl text-[10px] font-black uppercase border transition-all ${syncStatus.includes('Error') ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse'}`}>{syncStatus}</div>}
+                                <h2 className="text-3xl font-black mb-6 uppercase italic text-emerald-600 tracking-tighter leading-none text-center">System Integration</h2>
+                                {syncStatus && <div className={`mb-6 p-4 rounded-2xl text-[10px] font-black uppercase border transition-all ${syncStatus.includes('Error') ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse'}`}>{syncStatus}</div>}
                                 <div className="bg-slate-50 p-8 rounded-3xl mb-8 text-xs text-slate-600 border border-slate-200 leading-relaxed text-left shadow-inner overflow-hidden">
-                                    <div className="flex items-center gap-2 mb-4 font-black uppercase italic text-slate-800 border-b pb-2"><Icons.Info /> Integration Guide</div>
+                                    <div className="flex items-center gap-2 mb-4 font-black uppercase italic text-slate-800 border-b pb-2"><Icons.Info /> Active Data Sync</div>
                                     <ol className="space-y-2 ml-1 font-bold list-decimal list-inside opacity-70 italic leading-relaxed text-[11px]"><li>Go to Google Sheet &gt; <strong>File &gt; Publish to web</strong>.</li><li>Select <strong>PRODUCTION_LOG</strong> tab as <strong>CSV</strong>.</li><li>Paste link below.</li></ol>
-                                    <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
-                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Sample Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
-                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Real Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
+                                    <div className="mt-6 pt-6 border-t border-slate-200 space-y-4">
+                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-2 text-center">Sample Production Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded-xl p-3 text-[10px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
+                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-2 text-center">Live Production Data:</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded-xl p-3 text-[10px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
                                     </div>
                                 </div>
-                                <input type="text" placeholder="Paste link..." className="w-full border-2 border-slate-200 p-5 rounded-3xl mb-8 focus:border-emerald-500 outline-none text-sm font-bold shadow-inner bg-slate-50/50 text-center" value={sheetUrl} onChange={e => setSheetUrl(e.target.value)} />
-                                <button onClick={handleInitialize} disabled={isLoading || !sheetUrl} className="w-full bg-slate-900 text-white font-black py-6 rounded-3xl flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 uppercase tracking-widest shadow-2xl transition-all active:scale-95 leading-none">{isLoading ? <Icons.Refresh animate={true} /> : <div className="bg-emerald-400 p-1.5 rounded-full shadow-sm"><Icons.Check /></div>}{isLoading ? "Syncing Platform..." : "Lock & Initialize System"}</button>
+                                <input type="text" placeholder="Paste published CSV link here..." className="w-full border-2 border-slate-200 p-6 rounded-3xl mb-8 focus:border-emerald-500 outline-none text-sm font-bold shadow-inner bg-slate-50/50 text-center" value={sheetUrl} onChange={e => setSheetUrl(e.target.value)} />
+                                <button onClick={handleInitialize} disabled={isLoading || !sheetUrl} className="w-full bg-slate-900 text-white font-black py-6 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 uppercase tracking-widest shadow-2xl transition-all active:scale-95 leading-none">{isLoading ? <Icons.Refresh animate={true} /> : <div className="bg-emerald-400 p-2 rounded-full shadow-sm"><Icons.Check /></div>}{isLoading ? "Synchronizing Platform..." : "Lock & Initialize System"}</button>
                             </div>
                         </div>
                     )}
