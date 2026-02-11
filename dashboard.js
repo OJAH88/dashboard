@@ -1,0 +1,442 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, 
+  LineChart, Line, Legend
+} from 'recharts';
+
+// --- STABLE SVG COMPONENTS (Internalized to prevent ReferenceErrors/Crashes) ---
+const StableIcons = {
+  Globe: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+  Zap: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Scale: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
+  Award: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
+  Dollar: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  Refresh: ({ animate }) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
+  Settings: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>,
+  Reset: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>,
+  Coins: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
+  X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Info: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+  Check: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12"/></svg>,
+  Chevron: () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+};
+
+// --- DATA PROCESSING ---
+const parseCSV = (text) => {
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return [];
+  const clean = (val) => (val || "").replace(/^"|"$/g, '').trim();
+  const splitLine = (line) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
+        result.push(clean(current));
+        current = '';
+      } else { current += char; }
+    }
+    result.push(clean(current));
+    return result;
+  };
+  const headers = splitLine(lines[0]);
+  return lines.slice(1)
+    .map(line => {
+      const values = splitLine(line);
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = values[i] || ""; });
+      return obj;
+    })
+    .filter(row => {
+        const id = String(row["Cycle ID"] || "").toLowerCase();
+        return id !== "" && !id.includes("total") && !id.includes("summary");
+    });
+};
+
+const mapCsvToData = (row) => {
+  const num = (val) => {
+    if (typeof val === 'number') return val;
+    const parsed = parseFloat(String(val).replace(/[^0-9.]/g, ''));
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Smart Mapping: Searches for column names by content to avoid "too small" harvest error
+  const findValue = (keys) => {
+      const actualKey = Object.keys(row).find(k => keys.some(key => k.toLowerCase().includes(key.toLowerCase())));
+      return actualKey ? num(row[actualKey]) : 0;
+  };
+
+  const a = findValue(["flower (a)", "flower a", "premium"]);
+  const b = findValue(["smalls (b)", "smalls b", "smalls"]);
+  const c = findValue(["trim (c)", "trim c", "trim"]);
+  const lights = findValue(["lights"]) || 24;
+  const net = a + b + c;
+
+  return {
+    "Cycle ID": row["Cycle ID"] || row["Cycle"] || "N/A",
+    "Room ID": row["Room ID"] || row["Room"] || "N/A",
+    "Strain Name": row["Strain Name"] || row["Strain"] || "Unknown",
+    "Plant Count": findValue(["plant count", "plants"]) || 1,
+    "Flower (A)": a,
+    "Smalls (B)": b,
+    "Trim (C)": c,
+    "Total Yield (G)": net,
+    "Flower Days": findValue(["flower days", "days"]),
+    "Lights": lights,
+    "Grams per Light": Number((net / lights).toFixed(2))
+  };
+};
+
+const INITIAL_DATA = [
+  { "Cycle ID": "Cycle 1", "Room ID": "Room 1", "Strain Name": "Red Bullz", "Lights": 24, "Flower (A)": 2153, "Smalls (B)": 300, "Trim (C)": 200, "Flower Days": 63 },
+  { "Cycle ID": "Cycle 12", "Room ID": "Room 3", "Strain Name": "Slumplord", "Lights": 30, "Flower (A)": 3050, "Smalls (B)": 400, "Trim (C)": 300, "Flower Days": 64 }
+];
+
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
+
+const App = () => {
+  const [data, setData] = useState([]);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+  const [isLive, setIsLive] = useState(false);
+  const [chartMetric, setChartMetric] = useState('gpl');
+  const [selectedCompStrains, setSelectedCompStrains] = useState([]);
+  
+  const [priceA, setPriceA] = useState(2.85);
+  const [priceB, setPriceB] = useState(1.95);
+  const [priceC, setPriceC] = useState(0.85);
+
+  const [selectedCycle, setSelectedCycle] = useState('All');
+  const [selectedRoom, setSelectedRoom] = useState('All');
+  const [selectedStrain, setSelectedStrain] = useState('All');
+
+  const isValidUrl = (url) => { try { return url && url.trim().startsWith('http'); } catch (_) { return false; } };
+
+  const autoFetch = async (url) => {
+    if (!isValidUrl(url)) return false;
+    setIsLoading(true);
+    setSyncStatus('Synchronizing Stream...');
+    
+    let fetchUrl = url.trim();
+    if (fetchUrl.includes("docs.google.com") && !fetchUrl.includes("output=csv")) {
+        const idMatch = fetchUrl.match(/\/d\/(.*?)(\/|$)/);
+        if (idMatch && idMatch[1]) fetchUrl = `https://docs.google.com/spreadsheets/d/${idMatch[1]}/pub?output=csv`;
+    }
+    
+    const finalUrl = `${fetchUrl}${fetchUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`;
+    
+    try {
+      const response = await fetch(finalUrl);
+      if (!response.ok) throw new Error("Connection Denied");
+      const text = await response.text();
+      const parsed = parseCSV(text).map(mapCsvToData);
+      
+      if (parsed.length > 0) {
+        // EXPLICIT STATE REPLACEMENT
+        setData(parsed);
+        setIsLive(true);
+        const unique = [...new Set(parsed.map(d => d["Strain Name"]))].filter(s => s !== 'Unknown' && s !== 'N/A');
+        setSelectedCompStrains(unique.slice(0, 5));
+        setSyncStatus('');
+        return true;
+      }
+      setSyncStatus('Sheet empty or unreadable.');
+      return false;
+    } catch (e) { 
+        setSyncStatus('Error: Connection failed.');
+        return false;
+    } finally { setIsLoading(false); }
+  };
+
+  useEffect(() => {
+    const savedUrl = localStorage.getItem('cultivation_sheet_url');
+    if (savedUrl && isValidUrl(savedUrl)) {
+      setSheetUrl(savedUrl);
+      autoFetch(savedUrl);
+    } else {
+      const mapped = INITIAL_DATA.map(mapCsvToData);
+      setData(mapped);
+      setSelectedCompStrains([...new Set(mapped.map(d => d["Strain Name"]))].filter(s => s !== 'Unknown').slice(0, 5));
+    }
+  }, []);
+
+  const handleInitialize = async () => {
+    const success = await autoFetch(sheetUrl);
+    if (success) {
+        localStorage.setItem('cultivation_sheet_url', sheetUrl);
+        setShowSyncModal(false);
+    }
+  };
+
+  const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+  const cycleOptions = useMemo(() => ['All', ...naturalSort([...new Set(data.map(d => String(d["Cycle ID"])))].filter(x => x && x !== 'N/A' && x !== 'All'))], [data]);
+  const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].filter(x => x && x !== 'N/A' && x !== 'All').sort()], [data]);
+  const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].filter(x => x && x !== 'Unknown' && x !== 'All').sort()], [data]);
+  const allStrainsList = useMemo(() => [...new Set(data.map(d => String(d["Strain Name"])))].filter(x => x !== 'Unknown').sort(), [data]);
+
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const cMatch = selectedCycle === 'All' || item["Cycle ID"] === selectedCycle;
+      const rMatch = selectedRoom === 'All' || item["Room ID"] === selectedRoom;
+      const sMatch = selectedStrain === 'All' || item["Strain Name"] === selectedStrain;
+      return cMatch && rMatch && sMatch;
+    });
+  }, [data, selectedCycle, selectedRoom, selectedStrain]);
+
+  const stats = useMemo(() => {
+    const a = filteredData.reduce((acc, c) => acc + (c["Flower (A)"] || 0), 0);
+    const b = filteredData.reduce((acc, c) => acc + (c["Smalls (B)"] || 0), 0);
+    const c = filteredData.reduce((acc, c) => acc + (c["Trim (C)"] || 0), 0);
+    const netG = a + b + c;
+    
+    const rev = (a * priceA) + (b * priceB) + (c * priceC);
+    const avgGPL = filteredData.length > 0 ? (filteredData.reduce((acc, c) => acc + (c["Grams per Light"] || 0), 0) / filteredData.length) : 0;
+    
+    return {
+      kg: (netG / 1000).toFixed(1),
+      lbs: ((netG / 1000) * 2.20462).toFixed(1),
+      gpl: avgGPL.toFixed(1),
+      quality: netG > 0 ? ((a / netG) * 100).toFixed(1) : "0",
+      revenue: Math.round(rev).toLocaleString()
+    };
+  }, [filteredData, priceA, priceB, priceC]);
+
+  const strainBenchmark = useMemo(() => {
+    const map = {};
+    filteredData.forEach(d => {
+      const n = d["Strain Name"];
+      if (!map[n]) map[n] = { name: n, gplSum: 0, yieldSum: 0, daysSum: 0, count: 0 };
+      map[n].gplSum += d["Grams per Light"];
+      map[n].yieldSum += d["Total Yield (G)"];
+      map[n].daysSum += d["Flower Days"];
+      map[n].count += 1;
+    });
+    return Object.values(map).map(m => ({
+      name: String(m.name),
+      value: chartMetric === 'yield' ? Number((m.yieldSum / 1000).toFixed(2)) : (chartMetric === 'gpl' ? Number((m.gplSum / m.count).toFixed(2)) : Number((m.daysSum / m.count).toFixed(1)))
+    })).sort((a, b) => b.value - a.value);
+  }, [filteredData, chartMetric]);
+
+  const consistencyData = useMemo(() => {
+    const cycles = naturalSort([...new Set(data.map(d => d["Cycle ID"]))]);
+    return cycles.map(c => {
+      const row = { cycle: String(c) };
+      selectedCompStrains.forEach(s => {
+        const matches = data.filter(d => d["Cycle ID"] === c && d["Strain Name"] === s);
+        if (matches.length > 0) {
+          const avg = matches.reduce((acc, m) => acc + m["Grams per Light"], 0) / matches.length;
+          row[s] = Number(avg.toFixed(1));
+        } else { row[s] = null; }
+      });
+      return row;
+    });
+  }, [data, selectedCompStrains]);
+
+  const strainRoomMatrix = useMemo(() => {
+    const rooms = [...new Set(data.map(d => d["Room ID"]))].sort();
+    const strains = [...new Set(data.map(d => d["Strain Name"]))].sort();
+    return strains.map(s => {
+        const row = { strain: s, maxVal: 0 };
+        rooms.forEach(r => {
+            const matches = data.filter(d => d["Strain Name"] === s && d["Room ID"] === r);
+            if (matches.length > 0) {
+                const avg = matches.reduce((acc, m) => acc + m["Grams per Light"], 0) / matches.length;
+                row[r] = Number(avg.toFixed(1));
+                if (row[r] > row.maxVal) row.maxVal = row[r];
+            } else { row[r] = '-'; }
+        });
+        return row;
+    });
+  }, [data]);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
+      
+      {/* PROFESSIONAL ONE-ROW STICKY HEADER */}
+      <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-2 shadow-sm">
+        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          
+          <div className="flex items-center gap-3 pr-4 border-r border-slate-100">
+            <div className="bg-emerald-600 p-1.5 rounded-lg text-white shadow-md"><StableIcons.Globe /></div>
+            <div className="flex flex-col leading-none">
+                <h1 className="text-[10px] font-black italic uppercase text-slate-800 tracking-tighter">Cultivation Intel</h1>
+                <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`w-1 h-1 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+                    <p className="text-[7px] font-black uppercase text-slate-400">{isLive ? 'Linked' : 'Offline'}</p>
+                </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-100/50 px-2 py-1 rounded-lg border border-slate-200 shadow-inner">
+            <StableIcons.Coins />
+            {[{l: 'A', v: priceA, s: setPriceA}, {l: 'S', v: priceB, s: setPriceB}, {l: 'T', v: priceC, s: setPriceC}].map(p => (
+                <div key={p.l} className="flex items-center gap-1">
+                    <span className="text-[7px] font-black text-slate-400">{p.l}:</span>
+                    <input type="number" step="0.05" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded px-1 py-0.5 text-[9px] font-bold w-10 outline-none focus:border-emerald-500" />
+                </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-1 justify-center max-w-sm">
+            {[
+              { label: 'Cycle', val: selectedCycle, set: setSelectedCycle, options: cycleOptions },
+              { label: 'Room', val: selectedRoom, set: setSelectedRoom, options: roomOptions },
+              { label: 'Strain', val: selectedStrain, set: setSelectedStrain, options: strainOptions }
+            ].map(f => (
+              <div key={f.label} className="relative flex-1 group">
+                <select className="w-full bg-white text-[8px] font-black px-2 py-1 rounded border border-slate-200 uppercase appearance-none pr-4 outline-none group-hover:border-slate-300 shadow-sm cursor-pointer" value={f.val} onChange={e => f.set(e.target.value)}>
+                    <option disabled>{f.label}</option>
+                    {f.options.map(opt => <option key={String(opt)} value={String(opt)}>{String(opt)}</option>)}
+                </select>
+                <div className="absolute right-0.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><StableIcons.Chevron /></div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setSelectedCycle('All'); setSelectedRoom('All'); setSelectedStrain('All'); }} className="text-slate-300 p-1 hover:bg-slate-100 rounded transition-all"><StableIcons.Reset /></button>
+            <button onClick={() => autoFetch(sheetUrl)} disabled={isLoading || !sheetUrl} className="bg-slate-900 text-white p-1.5 rounded-md hover:bg-slate-800 active:scale-95 disabled:opacity-30">
+              <StableIcons.Refresh animate={isLoading} />
+            </button>
+            <button onClick={() => setShowSyncModal(true)} className="bg-emerald-600 text-white p-1.5 rounded-md hover:bg-emerald-700 shadow-md"><StableIcons.Settings /></button>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="max-w-screen-2xl mx-auto p-4 md:p-8">
+        
+        {/* KPI DASHBOARD */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[
+            { label: "Net Usable Harvest", val: stats.kg, unit: "kg", sub: `${stats.lbs} lbs`, icon: StableIcons.Scale, color: "bg-emerald-500" },
+            { label: "Efficiency (GPL)", val: stats.gpl, unit: "GPL", sub: "Grams / Light", icon: StableIcons.Zap, color: "bg-blue-500" },
+            { label: "Quality Mix", val: stats.quality, unit: "%", sub: "Ratio to Usable", icon: StableIcons.Award, color: "bg-amber-500" },
+            { label: "Gross Revenue", val: `$${stats.revenue}`, unit: "", sub: "Live USD Valuation", icon: StableIcons.Dollar, color: "bg-purple-500" }
+          ].map((kpi, i) => (
+            <div key={i} className="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">{kpi.label}</p>
+                <h3 className="text-3xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-xs font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
+                <p className="text-[10px] text-slate-300 font-bold mt-2 uppercase tracking-widest">{kpi.sub}</p>
+              </div>
+              <div className={`p-4 rounded-xl ${kpi.color} text-white shadow-lg`}><kpi.icon /></div>
+            </div>
+          ))}
+        </div>
+
+        {/* PRIMARY CHARTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="lg:col-span-2 bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+              <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Facility metrics per cultivar</p></div>
+              <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                {['yield', 'gpl', 'flowerDays'].map(m => (
+                  <button key={m} onClick={() => setChartMetric(m)} className={`px-5 py-2 text-[9px] font-black rounded-lg transition-all uppercase tracking-widest ${chartMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>
+                    {m === 'flowerDays' ? 'Days' : m}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }} angle={-45} textAnchor="end" />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} domain={chartMetric === 'gpl' ? [0, 200] : (chartMetric === 'flowerDays' ? [40, 80] : [0, 'auto'])} />
+                  <Tooltip />
+                  <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={32}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+             <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-emerald-800">Quality Split</h2>
+             <div className="w-full h-64 relative mb-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={[
+                        { name: 'Flower A', value: filteredData.reduce((acc, c) => acc + (c["Flower (A)"] || 0), 0) },
+                        { name: 'Smalls B', value: filteredData.reduce((acc, c) => acc + (c["Smalls (B)"] || 0), 0) },
+                        { name: 'Trim C', value: filteredData.reduce((acc, c) => acc + (c["Trim (C)"] || 0), 0) },
+                      ]} innerRadius={70} outerRadius={100} paddingAngle={10} dataKey="value" stroke="none">
+                      <Cell fill="#10b981" /><Cell fill="#3b82f6" /><Cell fill="#f59e0b" />
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                   <p className="text-4xl font-black text-slate-800 leading-none tracking-tighter">{stats.quality}%</p>
+                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mt-1 italic leading-none">Top Grade</p>
+                </div>
+             </div>
+             <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest text-center px-4 leading-relaxed italic opacity-60">Ratio of premium Flower A weight vs total net output</p>
+          </div>
+        </div>
+
+        {/* FACILITY MATRIX */}
+        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-20">
+            <div className="px-10 py-12 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                <div><h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none">Facility Yield Matrix</h2><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 italic">Historical efficiency (GPL) by strain per room</p></div>
+                <div className="bg-emerald-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase shadow-lg tracking-widest italic leading-none">Peak room highlighted per row</div>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead><tr className="text-[10px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-10 py-8 border-b border-slate-100">Genetic Lineage</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-10 py-8 text-center border-b border-slate-100">{r}</th>)}</tr></thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {strainRoomMatrix.map((row, i) => (
+                            <tr key={i} className="hover:bg-slate-50 group">
+                                <td className="px-10 py-7 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-xs tracking-tight">{row.strain}</td>
+                                {roomOptions.filter(r => r !== 'All').map(r => {
+                                    const val = row[r];
+                                    const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
+                                    return (<td key={r} className="px-10 py-7 text-center"><div className={`inline-block px-4 py-2 rounded-xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      {/* SETUP MODAL */}
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[3.5rem] p-10 max-w-xl w-full shadow-2xl relative border border-white/10 text-center">
+            <button onClick={() => setShowSyncModal(false)} className="absolute top-10 right-10 text-slate-300 hover:text-slate-500 transition-colors"><StableIcons.X /></button>
+            <h2 className="text-3xl font-black mb-6 uppercase italic text-emerald-600 tracking-tighter leading-none">System Data Setup</h2>
+            
+            {syncStatus && <div className={`mb-4 p-4 rounded-xl text-[10px] font-black uppercase tracking-widest border ${syncStatus.includes('Error') ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse'}`}>{syncStatus}</div>}
+
+            <div className="bg-slate-50 p-8 rounded-3xl mb-8 text-xs text-slate-600 border border-slate-200 leading-relaxed text-left shadow-inner">
+              <div className="flex items-center gap-2 mb-4 font-black uppercase italic text-slate-800 border-b pb-2"><StableIcons.Info /> Integration Guide</div>
+              <ol className="space-y-2 ml-1 font-bold list-decimal list-inside opacity-70 italic leading-relaxed">
+                <li>Go to Google Sheet &gt; <strong>File &gt; Publish to web</strong>.</li>
+                <li>Set sheet to <strong>PRODUCTION_LOG</strong> and format to <strong>CSV</strong>.</li>
+                <li>Copy the link and paste it below.</li>
+              </ol>
+              <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
+                <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Sample Data (Copy Link):</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
+                <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Real Data (Copy Link):</p><input readOnly value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=731339314&single=true&output=csv" className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
+              </div>
+            </div>
+            <input type="text" placeholder="Paste published CSV link here..." className="w-full border-2 border-slate-200 p-5 rounded-2xl mb-8 focus:border-emerald-500 outline-none text-[11px] font-bold shadow-inner bg-slate-50/50" value={sheetUrl} onChange={e => setSheetUrl(e.target.value)} />
+            <button onClick={handleInitialize} disabled={isLoading || !sheetUrl} className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 uppercase tracking-widest shadow-2xl transition-all active:scale-95">
+              {isLoading ? <StableIcons.Refresh animate={true} /> : <div className="bg-emerald-400 p-1.5 rounded-full shadow-sm"><StableIcons.Check /></div>}
+              {isLoading ? "Validating Source..." : "Lock & Initialize System"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
