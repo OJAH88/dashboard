@@ -42,6 +42,9 @@
             ENTRY_FORM_LINK: "https://forms.gle/ojBK6FsFKCnrp6m46" 
         };
 
+        const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
+        const KG_TO_LB = 2.20462;
+
         const { useState, useMemo, useEffect, useRef } = React;
         const { 
             BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -58,16 +61,12 @@
             Refresh: ({ animate }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
             X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
             Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-            Eye: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
             EyeOff: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>,
+            Eye: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
             Chevron: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
             Crown: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
-            Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>,
-            Info: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
-            Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-            Reset: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>,
-            Coins: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
+            Coins: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>
         };
 
         const MultiSelect = ({ label, options, selected, onChange }) => {
@@ -97,17 +96,57 @@
             );
         };
 
+        const parseCSV = (text) => {
+            const lines = text.split(/\r?\n/).filter(line => line.trim());
+            if (lines.length < 2) return [];
+            const clean = (val) => (val || "").replace(/^"|"$/g, '').trim();
+            const splitLine = (line) => {
+                const result = []; let current = ''; let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) { result.push(clean(current)); current = ''; } 
+                    else { current += char; }
+                }
+                result.push(clean(current)); return result;
+            };
+            const headers = splitLine(lines[0]);
+            return lines.slice(1).map(line => {
+                const values = splitLine(line);
+                const obj = {}; headers.forEach((h, i) => obj[h] = values[i]);
+                return mapCsvToData(obj);
+            }).filter(row => {
+                const cycleId = String(row["Cycle ID"] || row["Cycle"] || "").toLowerCase().trim();
+                return cycleId !== "" && cycleId !== "total" && cycleId !== "grand total" && cycleId !== "summary";
+            });
+        };
+
+        const mapCsvToData = (row) => {
+            const num = (val) => { const p = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(p) ? 0 : p; };
+            const a = num(row["Flower (A)"] || row["Flower A"]);
+            const b = num(row["Smalls (B)"] || row["Smalls B"]);
+            const c = num(row["Trim (C)"] || row["Trim C"]);
+            const lights = num(row["Lights"]) || 24;
+            const net = a + b + c;
+            return {
+                "Cycle ID": row["Cycle ID"] || "N/A",
+                "Room ID": row["Room ID"] || "N/A",
+                "Strain Name": row["Strain Name"] || "Unknown",
+                "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": net,
+                "Lights": lights, "Grams per Light": Number((net / lights).toFixed(2))
+            };
+        };
+
         const App = () => {
             const [data, setData] = useState([]);
             const [dataSource, setDataSource] = useState('live'); 
             const [isLoading, setIsLoading] = useState(false);
             const [lastSync, setLastSync] = useState('');
-            const [showEntryModal, setShowEntryModal] = useState(false);
-            const [showSyncModal, setShowSyncModal] = useState(false); // Modal for settings
             const [matrixMetric, setMatrixMetric] = useState('gpl');
             const [leaderboardSort, setLeaderboardSort] = useState('gpl');
             const [mixChartView, setMixChartView] = useState('ratio');
             const [showRoomDetails, setShowRoomDetails] = useState(true);
+            const [showEntryModal, setShowEntryModal] = useState(false);
 
             const [priceA, setPriceA] = useState(3.97);
             const [priceB, setPriceB] = useState(2.20);
@@ -117,48 +156,29 @@
             const [selectedRoom, setSelectedRoom] = useState('All');
             const [selectedStrain, setSelectedStrain] = useState('All');
 
+            const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
+
             const autoFetch = async (url) => {
+                if (!url) return;
                 setIsLoading(true);
                 try {
                     const finalUrl = `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`;
                     const response = await fetch(finalUrl);
                     const text = await response.text();
-                    const lines = text.split(/\r?\n/).filter(line => line.trim());
-                    if (lines.length < 2) return;
-                    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-                    const parsed = lines.slice(1).map(line => {
-                        const values = line.split(',').map(v => v.replace(/^"|"$/g, '').trim());
-                        const obj = {}; headers.forEach((h, i) => obj[h] = values[i]);
-                        return mapCsvToData(obj);
-                    }).filter(d => d["Cycle ID"] !== "" && !String(d["Cycle ID"]).toLowerCase().includes("total"));
-                    
-                    setData(parsed);
-                    setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                    const parsed = parseCSV(text);
+                    if (parsed.length > 0) {
+                        setData([...parsed]);
+                        setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                    }
                 } catch (e) { console.error(e); } finally { setIsLoading(false); }
             };
 
-            const mapCsvToData = (row) => {
-                const num = (val) => { const p = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(p) ? 0 : p; };
-                const a = num(row["Flower (A)"] || row["Flower A"]);
-                const b = num(row["Smalls (B)"] || row["Smalls B"]);
-                const c = num(row["Trim (C)"] || row["Trim C"]);
-                const lights = num(row["Lights"]) || 24;
-                const net = a + b + c;
-                return {
-                    "Cycle ID": row["Cycle ID"] || "N/A",
-                    "Room ID": row["Room ID"] || "N/A",
-                    "Strain Name": row["Strain Name"] || "Unknown",
-                    "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": net,
-                    "Lights": lights, "Grams per Light": Number((net / lights).toFixed(2))
-                };
-            };
-
-            useEffect(() => { autoFetch(dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK); }, [dataSource]);
+            useEffect(() => { autoFetch(fetchLink); }, [fetchLink]);
 
             const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            const cycleOptions = useMemo(() => ['All', ...naturalSort([...new Set(data.map(d => String(d["Cycle ID"])))])], [data]);
-            const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].sort()], [data]);
-            const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].sort()], [data]);
+            const cycleOptions = useMemo(() => ['All', ...naturalSort([...new Set(data.map(d => String(d["Cycle ID"])))].filter(x => x && x !== 'N/A'))], [data]);
+            const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].filter(x => x && x !== 'N/A').sort()], [data]);
+            const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].filter(x => x && x !== 'Unknown').sort()], [data]);
 
             const filteredData = useMemo(() => {
                 return data.filter(item => {
@@ -169,16 +189,6 @@
                 });
             }, [data, selectedCycle, selectedRoom, selectedStrain]);
 
-            const facilityAverages = useMemo(() => {
-                const a = data.reduce((acc, c) => acc + c["Flower (A)"], 0);
-                const net = data.reduce((acc, c) => acc + c["Total Yield (G)"], 0);
-                const lights = data.reduce((acc, c) => acc + c["Lights"], 0);
-                return {
-                    gpl: lights > 0 ? (net / lights).toFixed(1) : 0,
-                    mix: net > 0 ? ((a / net) * 100).toFixed(1) : 0
-                };
-            }, [data]);
-
             const stats = useMemo(() => {
                 const a = filteredData.reduce((acc, c) => acc + (c["Flower (A)"] || 0), 0);
                 const b = filteredData.reduce((acc, c) => acc + (c["Smalls (B)"] || 0), 0);
@@ -186,9 +196,15 @@
                 const netG = a + b + c;
                 const lights = filteredData.reduce((acc, d) => acc + d["Lights"], 0);
                 const rev = (a * priceA) + (b * priceB) + (c * priceC);
+                
+                const fmt = (v) => (v / 1000).toFixed(1);
+                const lb = (v) => ((v / 1000) * KG_TO_LB).toFixed(1);
+
                 return {
-                    kg: (netG / 1000).toFixed(1),
-                    lbs: ((netG / 1000) * 2.20462).toFixed(1),
+                    totalKg: fmt(netG), totalLb: lb(netG),
+                    flowerA: fmt(a), flowerALb: lb(a),
+                    smallsB: fmt(b), smallsBLb: lb(b),
+                    trimC: fmt(c), trimCLb: lb(c),
                     gpl: lights > 0 ? (netG / lights).toFixed(1) : 0,
                     rpl: lights > 0 ? (rev / lights).toFixed(2) : 0,
                     quality: netG > 0 ? ((a / netG) * 100).toFixed(1) : "0",
@@ -196,36 +212,27 @@
                 };
             }, [filteredData, priceA, priceB, priceC]);
 
-            const strainBenchmark = useMemo(() => {
-                const map = {};
-                filteredData.forEach(d => {
-                    const n = d["Strain Name"];
-                    if (!map[n]) map[n] = { name: n, gplSum: 0, yieldSum: 0, count: 0 };
-                    map[n].gplSum += d["Grams per Light"];
-                    map[n].yieldSum += d["Total Yield (G)"];
-                    map[n].count += 1;
-                });
-                return Object.values(map).map(m => ({
-                    name: String(m.name),
-                    value: matrixMetric === 'yield' ? Number((m.yieldSum / 1000).toFixed(2)) : Number((m.gplSum / m.count).toFixed(2))
-                })).sort((a, b) => b.value - a.value);
-            }, [filteredData, matrixMetric]);
-
-            const scatterData = useMemo(() => {
-                return filteredData.map((d, i) => ({
-                    x: d["Grams per Light"],
-                    y: d["Total Yield (G)"] > 0 ? Number(((d["Flower (A)"] / d["Total Yield (G)"]) * 100).toFixed(1)) : 0,
-                    name: d["Strain Name"],
-                    id: i
-                }));
-            }, [filteredData]);
-
             const cycleTrendData = useMemo(() => {
                 return cycleOptions.filter(c => c !== 'All').map(c => {
                     const rows = data.filter(d => d["Cycle ID"] === c);
                     const netTotal = rows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
                     const premiumFlower = rows.reduce((acc, r) => acc + r["Flower (A)"], 0);
-                    const res = { cycle: c, facilityRatio: netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0 };
+                    const lightsTotal = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
+                    const activeRooms = [...new Set(rows.map(r => r["Room ID"]))].filter(id => id !== "N/A");
+
+                    const res = { cycle: c };
+                    
+                    if (mixChartView === 'ratio') {
+                        res.facilityValue = netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0;
+                    } else if (mixChartView === 'volume') {
+                        // User Request: Average of the rooms rather than sum
+                        res.facilityValue = activeRooms.length > 0 
+                            ? Number(((premiumFlower / 1000) / activeRooms.length).toFixed(1)) 
+                            : 0;
+                    } else {
+                        res.facilityValue = Number((netTotal / lightsTotal).toFixed(1));
+                    }
+
                     roomOptions.filter(r => r !== 'All').forEach(room => {
                         const roomRows = rows.filter(d => d["Room ID"] === room);
                         const roomNet = roomRows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
@@ -237,10 +244,18 @@
                             else res[room] = Number((roomNet / roomLights).toFixed(1));
                         }
                     });
-                    res.facilityValue = mixChartView === 'ratio' ? res.facilityRatio : 0; 
                     return res;
                 });
             }, [data, cycleOptions, roomOptions, mixChartView]);
+
+            const scatterData = useMemo(() => {
+                return filteredData.map((d, i) => ({
+                    x: d["Grams per Light"],
+                    y: d["Total Yield (G)"] > 0 ? Number(((d["Flower (A)"] / d["Total Yield (G)"]) * 100).toFixed(1)) : 0,
+                    name: d["Strain Name"],
+                    id: i
+                }));
+            }, [filteredData]);
 
             const roomBenchmark = useMemo(() => {
                 const map = {};
@@ -280,39 +295,40 @@
                 });
             }, [filteredData, roomOptions, strainOptions, selectedStrain, matrixMetric]);
 
-            const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
-
             return (
                 <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
                     <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-sm">
-                        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-left">
                             <div className="flex items-center gap-4 pr-6 border-r border-slate-100 shrink-0">
                                 <div className="bg-emerald-600 p-2.5 rounded-2xl text-white shadow-md"><Icons.Globe /></div>
-                                <div className="flex flex-col leading-none text-left">
+                                <div className="flex flex-col leading-none">
                                     <h1 className="text-sm font-black italic uppercase text-slate-800 tracking-tighter">Cultivation Intel</h1>
                                     <div className="flex items-center gap-2 mt-1.5 leading-none">
                                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <p className="text-[10px] font-black uppercase text-slate-400">SYNC: {lastSync}</p>
+                                        <p className="text-[10px] font-black uppercase text-slate-400">SYNC: {lastSync || 'Pending'}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Prod</button>
+                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Production</button>
                                 <button onClick={() => setDataSource('sample')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Sample Model</button>
                             </div>
 
-                            <div className="flex items-center gap-8 bg-slate-100/50 px-10 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[650px]">
-                                <Icons.Coins />
-                                {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
-                                    <div key={p.l} className="flex flex-col gap-1.5 flex-1 min-w-[140px]">
-                                        <span className="text-[11px] font-black text-slate-700 uppercase leading-none text-left">{p.l}:</span>
-                                        <div className="flex items-center">
-                                            <span className="text-slate-400 text-sm font-bold mr-1">$</span>
-                                            <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1.5 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
+                            <div className="flex flex-col items-start gap-1">
+                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-1">Live Market Valuation Controls</p>
+                                <div className="flex items-center gap-8 bg-slate-100/50 px-10 py-2 rounded-2xl border border-slate-200 shadow-inner min-w-[550px]">
+                                    <Icons.Coins />
+                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
+                                        <div key={p.l} className="flex items-center gap-2 flex-1">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">{p.l}:</span>
+                                            <div className="flex items-center">
+                                                <span className="text-slate-400 text-sm mr-1">$</span>
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-2 flex-1 justify-center max-w-lg">
@@ -323,25 +339,49 @@
 
                             <div className="flex items-center gap-3 shrink-0">
                                 <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-3 rounded-2xl shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
-                                <button onClick={() => autoFetch(dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK)} className="bg-slate-900 text-white p-3 rounded-2xl hover:bg-slate-800 transition-all"><Icons.Refresh animate={isLoading} /></button>
-                                <button onClick={() => setShowSyncModal(true)} className="bg-slate-200 text-slate-600 p-3 rounded-2xl hover:bg-slate-300 shadow-md transition-all"><Icons.Settings /></button>
+                                <button onClick={() => autoFetch(fetchLink)} className="bg-slate-900 text-white p-3 rounded-2xl transition-all"><Icons.Refresh animate={isLoading} /></button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center">
+                    <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center flex flex-col gap-10">
                         {/* KPI GRID */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group col-span-1 lg:col-span-1">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p>
+                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.totalKg}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">kg</span></h3>
+                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">({stats.totalLb} lb total)</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-emerald-500 text-white shadow-lg"><Icons.Scale /></div>
+                                </div>
+                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                    {[
+                                        { l: 'FLOWER (A)', v: stats.flowerA, lb: stats.flowerALb, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'SMALLS (B)', v: stats.smallsB, lb: stats.smallsBLb, c: 'text-blue-600', bg: 'bg-blue-50/50' },
+                                        { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                    ].map(b => (
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <div className="text-right leading-none">
+                                                <p className={`text-[13px] font-black ${b.c}`}>{b.v}kg</p>
+                                                <p className="text-[9px] font-bold text-slate-400/60 mt-1 uppercase">({b.lb}lb)</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             {[
-                                { label: "Net Usable Harvest", val: stats.kg, unit: "kg", sub: `${stats.lbs} lbs`, icon: Icons.Scale, color: "bg-emerald-500" },
                                 { label: "Efficiency (GPL)", val: stats.gpl, unit: "GPL", sub: "Weight Density", icon: Icons.Zap, color: "bg-blue-500" },
-                                { label: "Premium Mix", val: stats.quality, unit: "%", sub: "Target: 80%", icon: Icons.Award, color: "bg-amber-500" },
-                                { label: "Revenue Velocity", val: `$${stats.rpl}`, unit: "", sub: "Rev Per Light", icon: Icons.Dollar, color: "bg-purple-500" }
+                                { label: "Flower Yield Ratio", val: stats.quality, unit: "%", sub: "Goal: 75% Mix", icon: Icons.Award, color: "bg-amber-500" },
+                                { label: "Revenue Velocity", val: `$${stats.rpl}`, unit: "", sub: "Live Revenue Per Light", icon: Icons.Dollar, color: "bg-purple-500" }
                             ].map((kpi, i) => (
-                                <div key={i} className="bg-white p-7 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group performance-card">
+                                <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group performance-card">
                                     <div className="text-left">
                                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">{kpi.label}</p>
-                                        <h3 className="text-3xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-xs font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
+                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-sm font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
                                         <p className="text-[11px] text-slate-300 font-bold mt-2 uppercase tracking-widest">{kpi.sub}</p>
                                     </div>
                                     <div className={`p-5 rounded-2xl ${kpi.color} text-white shadow-lg`}><kpi.icon /></div>
@@ -349,132 +389,101 @@
                             ))}
                         </div>
 
-                        {/* STRATEGY MODULES */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                            <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
-                                    <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Batch Strategy Map</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Yield vs Quality (Elite Quadrant Logic)</p></div>
-                                    <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600"><Icons.Target /></div>
-                                </div>
-                                <div className="h-[400px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                            <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 10, fontWeight: 900}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 10, fontWeight: 900 }} />
-                                            <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 10, fontWeight: 900}} domain={[0, 100]} label={{ value: 'QUALITY %', angle: -90, position: 'insideLeft', fontSize: 10, fontWeight: 900 }} />
-                                            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                                            <Scatter name="Batches" data={scatterData}>
-                                                {scatterData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} fillOpacity={0.6} />)}
-                                            </Scatter>
-                                            <ReferenceLine x={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" label={{ value: '100 GPL', position: 'top', fill: '#10b981', fontSize: 10, fontWeight: 900 }} />
-                                            <ReferenceLine y={80} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" label={{ value: '80% MIX', position: 'right', fill: '#f59e0b', fontSize: 10, fontWeight: 900 }} />
-                                        </ScatterChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="mt-6 p-4 bg-emerald-50/50 border border-emerald-100 rounded-3xl text-[10px] font-black uppercase tracking-widest text-emerald-800 italic text-center">Target Quadrant: High Efficiency (100+) & High Quality (80%+)</div>
-                            </div>
-
-                            <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center performance-card overflow-hidden">
-                                <div className="flex flex-col gap-4 mb-8 text-left leading-none">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div><h2 className="text-xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Market Mix</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Facility Standard Tracking</p></div>
-                                        <button onClick={() => setShowRoomDetails(!showRoomDetails)} className={`p-2 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
-                                    </div>
-                                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100 self-start">
-                                        {['ratio', 'volume', 'gpl'].map(m => (
-                                            <button key={m} onClick={() => setMixChartView(m)} className={`px-4 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${mixChartView === m ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400'}`}>{m}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="h-[280px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <ComposedChart data={cycleTrendData}>
-                                            <defs>
-                                                <linearGradient id="colorMix" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                            <XAxis dataKey="cycle" tick={{fontSize: 9, fontWeight: 900}} axisLine={false} />
-                                            <YAxis tick={{fontSize: 9}} domain={mixChartView === 'ratio' ? [50, 100] : [0, 'auto']} axisLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
-                                            <Tooltip />
-                                            <Legend verticalAlign="top" height={36}/>
-                                            <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" />
-                                            {mixChartView === 'ratio' && <ReferenceLine y={80} stroke="#f43f5e" strokeWidth={2} strokeDasharray="3 3" label={{ position: 'right', value: 'TARGET (80%)', fill: '#f43f5e', fontSize: 10, fontWeight: 900 }} />}
-                                            {showRoomDetails && roomOptions.filter(r => r !== 'All').map((room, i) => (
-                                                <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={1.5} strokeDasharray="4 4" dot={{ r: 2 }} opacity={0.8} />
-                                            ))}
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* GENETIC RADAR PROFILE - DYNAMIC ON STRAIN SELECTION */}
-                        {selectedStrain !== 'All' && (
-                            <div className="bg-emerald-900 text-white p-12 rounded-[4rem] mb-10 shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom duration-500">
-                                <div className="absolute top-0 right-0 p-20 opacity-10"><Icons.Target /></div>
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10 text-left">
-                                    <div className="max-w-xl">
-                                        <span className="bg-white/10 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">Cultivar Deep Dive</span>
-                                        <h2 className="text-6xl font-black italic uppercase tracking-tighter mt-4 leading-none">{selectedStrain}</h2>
-                                        <p className="text-emerald-100/60 mt-6 font-bold uppercase tracking-widest italic text-sm">Genetic Performance Profile vs Facility Standard</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-8 w-full md:w-auto">
-                                        {[
-                                            { label: 'Weight Score', val: stats.gpl, avg: facilityAverages.gpl, unit: 'GPL' },
-                                            { label: 'Quality Score', val: stats.quality, avg: facilityAverages.mix, unit: '%' }
-                                        ].map(item => (
-                                            <div key={item.label} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 backdrop-blur-md">
-                                                <p className="text-[10px] font-black uppercase text-emerald-300 mb-2">{item.label}</p>
-                                                <h4 className="text-4xl font-black italic tracking-tighter">{item.val}<span className="text-xs ml-1 opacity-40 font-normal">{item.unit}</span></h4>
-                                                <div className="mt-4 pt-4 border-t border-white/5">
-                                                    <p className="text-[9px] font-bold text-white/40 uppercase">Facility Avg: {item.avg}{item.unit}</p>
-                                                    <div className={`mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden`}>
-                                                        <div className={`h-full ${Number(item.val) >= Number(item.avg) ? 'bg-emerald-400' : 'bg-rose-400'}`} style={{ width: `${Math.min((Number(item.val)/Number(item.avg))*50, 100)}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ROW 3: LEADERBOARD */}
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden mb-10 performance-card">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 text-left leading-none gap-6">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic text-center">Room efficiency rank (GPL) + Market Mix Score (%)</p></div>
-                                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase px-3">Sort by:</span>
-                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-5 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL</button>
-                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-5 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Mix (%)</button>
-                                </div>
+                        {/* MODULE 1: BATCH STRATEGY MAP (INDIVIDUAL ROW) */}
+                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Batch Strategy Map</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Efficiency vs Flower Grade (Target Range Analysis)</p></div>
+                                <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600"><Icons.Target /></div>
                             </div>
                             <div className="h-[450px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 100 }}>
+                                    <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 10, fontWeight: 900}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 10, fontWeight: 900 }} />
+                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 10, fontWeight: 900}} domain={[65, 95]} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 10, fontWeight: 900 }} />
+                                        <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                                        <Scatter name="Batches" data={scatterData}>
+                                            {scatterData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} fillOpacity={0.6} />)}
+                                        </Scatter>
+                                        <ReferenceLine x={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" label={{ value: '100 GPL', position: 'top', fill: '#10b981', fontSize: 10, fontWeight: 900 }} />
+                                        <ReferenceLine y={75} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" label={{ value: '75% TARGET', position: 'right', fill: '#f59e0b', fontSize: 10, fontWeight: 900 }} />
+                                    </ScatterChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* MODULE 2: PREMIUM MARKET MIX (INDIVIDUAL ROW) */}
+                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-left performance-card overflow-hidden">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 leading-none">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600"><Icons.Award /></div>
+                                    <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Market Mix</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Variance vs Industrial Standard (75%)</p></div>
+                                </div>
+                                <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                                    <button onClick={() => setShowRoomDetails(!showRoomDetails)} title="Toggle Room Detail" className={`p-2.5 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+                                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                                    {['ratio', 'volume', 'gpl'].map(m => (
+                                        <button key={m} onClick={() => setMixChartView(m)} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${mixChartView === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400 hover:bg-slate-50'}`}>{m}</button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="h-[400px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={cycleTrendData}>
+                                        <defs>
+                                            <linearGradient id="colorMix" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                        <XAxis dataKey="cycle" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{fontSize: 10, fontWeight: 900}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
+                                        <Tooltip />
+                                        <Legend verticalAlign="top" height={40}/>
+                                        <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" animationDuration={1000} />
+                                        {mixChartView === 'ratio' && <ReferenceLine y={75} stroke="#f43f5e" strokeWidth={2} strokeDasharray="3 3" label={{ position: 'right', value: '75% GOAL', fill: '#f43f5e', fontSize: 10, fontWeight: 900 }} />}
+                                        {showRoomDetails && roomOptions.filter(r => r !== 'All').map((room, i) => (
+                                            <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} opacity={0.8} />
+                                        ))}
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* ROW 3: LEADERBOARD */}
+                        <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mt-2 italic">Room Rankings by Operational Performance</p></div>
+                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase px-4 tracking-widest">Sort Strategy:</span>
+                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL (Weight)</button>
+                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Mix (Grade)</button>
+                                </div>
+                            </div>
+                            <div className="h-[500px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 120 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
                                         <XAxis type="number" domain={[0, 200]} hide />
-                                        <YAxis dataKey="name" type="category" tick={{fontSize: 14, fontWeight: 900, fill: '#1e293b'}} width={80} axisLine={false} tickLine={false} />
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 15, fontStyle: 'italic', fontWeight: 900, fill: '#1e293b'}} width={100} axisLine={false} tickLine={false} />
                                         <Tooltip cursor={{fill: '#f8fafc'}} content={({active, payload}) => {
                                             if (active && payload && payload.length) {
                                                 const d = payload[0].payload;
                                                 return (
-                                                    <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-2xl border border-slate-800 min-w-[180px]">
-                                                        <div className="flex items-center gap-2 mb-2 border-b border-white/10 pb-2 text-left leading-none">
+                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[220px]">
+                                                        <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 text-left leading-none">
                                                             <Icons.Crown />
-                                                            <p className="text-xs font-black uppercase">{d.name}</p>
+                                                            <p className="text-sm font-black uppercase tracking-widest">{d.name}</p>
                                                         </div>
-                                                        <div className="space-y-1.5 text-left leading-none mt-4">
-                                                            <p className="text-[10px] flex justify-between gap-4 uppercase"><span className="text-slate-400">GPL:</span> <span className="font-black text-blue-400">{d.gpl}</span></p>
-                                                            <p className="text-[10px] flex justify-between gap-4 uppercase"><span className="text-slate-400">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
+                                                        <div className="space-y-2 text-left leading-none mt-4">
+                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
+                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
                                                         </div>
                                                     </div>
                                                 );
                                             }
                                             return null;
                                         }}/>
-                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL', position: 'top', fill: '#10b981', fontSize: 10, fontWeight: 900 }} />
-                                        <Bar dataKey="sortVal" name="Score" radius={[0, 15, 15, 0]} barSize={40}>
+                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 11, fontWeight: 900 }} />
+                                        <Bar dataKey="sortVal" name="Score" radius={[0, 20, 20, 0]} barSize={50}>
                                             {roomBenchmark.map((entry, i) => (
                                                 <Cell key={i} fill={ i === 0 ? '#10b981' : entry.sortVal > (leaderboardSort === 'mix' ? 75 : 90) ? '#3b82f6' : entry.sortVal > (leaderboardSort === 'mix' ? 50 : 60) ? '#f59e0b' : '#f43f5e' } />
                                             ))}
@@ -484,26 +493,34 @@
                             </div>
                         </div>
 
-                        {/* MATRIX WITH DUAL VIEW */}
-                        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card">
-                            <div className="px-10 py-12 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6 leading-none text-left">
-                                <div><h2 className="text-3xl font-black italic uppercase tracking-tighter">Facility Yield Matrix</h2><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 italic leading-none">Toggle between High-Efficiency (GPL) and Raw Output (Total Kg)</p></div>
-                                <div className="flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
-                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
-                                    <button onClick={() => setMatrixMetric('yield')} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg)</button>
+                        {/* ROW 4: FACILITY YIELD MATRIX */}
+                        <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card text-left">
+                            <div className="px-12 py-16 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-8 leading-none">
+                                <div><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Facility Yield Matrix</h2><p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Room (Kg & Lb Integration)</p></div>
+                                <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg/Lb)</button>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto text-left">
+                            <div className="overflow-x-auto">
                                 <table className="w-full border-collapse">
-                                    <thead><tr className="text-[11px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-10 py-8 border-b border-slate-100 text-slate-500">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-10 py-8 text-center border-b border-slate-100 text-slate-500">{r}</th>)}</tr></thead>
+                                    <thead><tr className="text-[12px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-12 py-10 border-b border-slate-100 text-slate-500">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-10 py-10 text-center border-b border-slate-100 text-slate-500">{r}</th>)}</tr></thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {strainRoomMatrix.map((row, i) => (
                                             <tr key={i} className="hover:bg-slate-50 group transition-colors">
-                                                <td className="px-10 py-8 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-sm tracking-tight">{row.strain}</td>
+                                                <td className="px-12 py-9 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-sm tracking-tight">{row.strain}</td>
                                                 {roomOptions.filter(r => r !== 'All').map(r => {
-                                                    const val = row[r] || '-';
+                                                    const val = row[r];
                                                     const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
-                                                    return (<td key={r} className="px-10 py-8 text-center"><div className={`inline-block px-5 py-2.5 rounded-2xl font-mono font-bold text-xs ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>{val}</div></td>);
+                                                    const lbs = val !== '-' && matrixMetric === 'yield' ? `(${ (val * KG_TO_LB).toFixed(1) }lb)` : '';
+                                                    return (
+                                                        <td key={r} className="px-10 py-9 text-center">
+                                                            <div className={`inline-block px-4 py-3 rounded-2xl font-mono font-bold text-sm ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>
+                                                                <p>{val}{matrixMetric === 'yield' ? 'kg' : ''}</p>
+                                                                {lbs && <p className="text-[9px] opacity-70 mt-1">{lbs}</p>}
+                                                            </div>
+                                                        </td>
+                                                    );
                                                 })}
                                             </tr>
                                         ))}
@@ -513,34 +530,18 @@
                         </div>
                     </div>
 
-                    {/* MODALS */}
+                    {/* MODAL: DATA ENTRY */}
                     {showEntryModal && (
-                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
-                            <div className="bg-white rounded-[3rem] w-full max-w-4xl h-[90vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
-                                <div className="absolute top-6 right-6 z-10">
-                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-3 rounded-2xl text-slate-500 transition-colors shadow-sm">
+                        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[3.5rem] w-full max-w-5xl h-[92vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                                <div className="absolute top-8 right-8 z-10">
+                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm">
                                         <Icons.X />
                                     </button>
                                 </div>
-                                <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Entry Form">Loading form...</iframe>
-                            </div>
-                        </div>
-                    )}
-
-                    {showSyncModal && (
-                        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-                            <div className="bg-white rounded-[4rem] p-12 max-w-xl w-full shadow-2xl relative border border-white/10 text-center">
-                                <button onClick={() => setShowSyncModal(false)} className="absolute top-10 right-10 text-slate-300 hover:text-slate-500 transition-colors"><Icons.X /></button>
-                                <h2 className="text-3xl font-black mb-6 uppercase italic text-emerald-600 tracking-tighter leading-none text-center">System Logic Setup</h2>
-                                <div className="bg-slate-50 p-8 rounded-3xl mb-8 text-xs text-slate-600 border border-slate-200 leading-relaxed text-left shadow-inner overflow-hidden">
-                                    <div className="flex items-center gap-2 mb-4 font-black uppercase italic text-slate-800 border-b pb-2"><Icons.Info /> Technical Guide</div>
-                                    <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
-                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Sample Data:</p><input readOnly value={SYSTEM_CONFIG.SAMPLE_DATA_LINK} className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
-                                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1 leading-none text-center">Real Production Data:</p><input readOnly value={SYSTEM_CONFIG.REAL_DATA_LINK} className="w-full bg-white border border-slate-200 rounded p-2 text-[8px] font-mono text-slate-400" onClick={e => e.target.select()} /></div>
-                                    </div>
+                                <div className="h-full w-full bg-slate-50">
+                                    <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Production Entry Form">Loading form...</iframe>
                                 </div>
-                                <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 text-[10px] font-bold italic mb-6">Note: Data links are hardwired. Use the header toggle to switch environments.</div>
-                                <button onClick={() => setShowSyncModal(false)} className="w-full bg-slate-900 text-white font-black py-6 rounded-3xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 leading-none">Close Settings</button>
                             </div>
                         </div>
                     )}
