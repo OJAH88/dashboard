@@ -53,7 +53,7 @@
         } = Recharts;
 
         const Icons = {
-            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
             Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
             Scale: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
             Award: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
@@ -156,7 +156,7 @@
             const [selectedRoom, setSelectedRoom] = useState('All');
             const [selectedStrain, setSelectedStrain] = useState('All');
 
-            const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
+            const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
             const autoFetch = async (url) => {
                 if (!url) return;
@@ -173,9 +173,10 @@
                 } catch (e) { console.error(e); } finally { setIsLoading(false); }
             };
 
+            const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
+
             useEffect(() => { autoFetch(fetchLink); }, [fetchLink]);
 
-            const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
             const cycleOptions = useMemo(() => ['All', ...naturalSort([...new Set(data.map(d => String(d["Cycle ID"])))].filter(x => x && x !== 'N/A'))], [data]);
             const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].filter(x => x && x !== 'N/A').sort()], [data]);
             const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].filter(x => x && x !== 'Unknown').sort()], [data]);
@@ -231,6 +232,8 @@
                     trimRpl: (revC / lights).toFixed(2),
 
                     quality: netG > 0 ? ((a / netG) * 100).toFixed(1) : "0",
+                    smallsRatio: netG > 0 ? ((b / netG) * 100).toFixed(1) : "0",
+                    trimRatio: netG > 0 ? ((c / netG) * 100).toFixed(1) : "0",
                     revenue: Math.round(totalRev).toLocaleString()
                 };
             }, [filteredData, priceA, priceB, priceC]);
@@ -334,7 +337,6 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
-                    {/* STICKY HEADER */}
                     <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-sm">
                         <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-left">
                             <div className="flex items-center gap-4 pr-6 border-r border-slate-100 shrink-0">
@@ -349,7 +351,7 @@
                             </div>
 
                             <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Prod</button>
+                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Production</button>
                                 <button onClick={() => setDataSource('sample')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Sample Model</button>
                             </div>
 
@@ -362,7 +364,7 @@
                                             <span className="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">{p.l}:</span>
                                             <div className="flex items-center">
                                                 <span className="text-slate-400 text-sm mr-1">$</span>
-                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
                                             </div>
                                         </div>
                                     ))}
@@ -401,7 +403,7 @@
                                         { l: 'SMALLS (B)', v: stats.smallsB, lb: stats.smallsBLb, c: 'text-blue-600', bg: 'bg-blue-50/50' },
                                         { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-600', bg: 'bg-amber-50/50' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
                                             <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
                                             <div className="text-right leading-none">
                                                 <p className={`text-[13px] font-black ${b.c}`}>{b.v}kg</p>
@@ -428,7 +430,7 @@
                                         { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
                                         { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-50/50' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
                                             <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
                                             <p className={`text-[13px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
@@ -436,18 +438,27 @@
                                 </div>
                             </div>
 
-                            {/* QUALITY RATIO CARD */}
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card group flex flex-col justify-between">
-                                <div className="flex justify-between items-start">
+                            {/* FLOWER YIELD RATIO CARD (OVERHAULED BREAKDOWN) */}
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
+                                <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
                                         <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.quality}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">%</span></h3>
-                                        <p className="text-[11px] text-slate-300 font-bold mt-1 uppercase">Goal: 75% Mix</p>
+                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">Goal: 75% Mix</p>
                                     </div>
-                                    <div className="p-5 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
+                                    <div className="p-4 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
                                 </div>
-                                <div className="p-5 bg-amber-50/50 rounded-3xl border border-amber-100 mt-6">
-                                    <p className="text-[9px] font-bold text-amber-800 uppercase tracking-widest leading-relaxed italic text-center">Measures percentage of premium Flower (A) against total harvest volume.</p>
+                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                    {[
+                                        { l: 'FLOWER (A) %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'SMALLS (B) %', v: stats.smallsRatio, c: 'text-blue-600', bg: 'bg-blue-50/50' },
+                                        { l: 'TRIM (C) %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                    ].map(b => (
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
+                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[13px] font-black ${b.c}`}>{b.v}%</p>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
@@ -467,7 +478,7 @@
                                         { l: 'SMALLS RPL', v: stats.smallsRpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
                                         { l: 'TRIM RPL', v: stats.trimRpl, c: 'text-amber-600', bg: 'bg-amber-50/50' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
                                             <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
                                             <p className={`text-[13px] font-black ${b.c}`}>${b.v}</p>
                                         </div>
