@@ -18,24 +18,37 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; overflow-x: hidden; background-color: #f8fafc; }
+        
+        /* Increase base font size by 1pt (approx 1.33px) */
+        html { font-size: 17.33px; } 
+
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; transition: background-color 0.3s ease; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
         .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
-            stroke: #f1f5f9;
+            stroke: currentColor;
+            opacity: 0.1;
         }
+        
         .performance-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .performance-card:hover { transform: translateY(-4px); }
+
+        /* Dark Mode High-Contrast Grey Fonts */
+        .dark .text-slate-400 { color: #94a3b8 !important; } /* Lighter grey for dark mode */
+        .dark .text-slate-500 { color: #cbd5e1 !important; } /* Much lighter grey for dark mode */
+        
+        /* Light Mode Darkened Grey Fonts for contrast */
+        body:not(.dark) .text-slate-400 { color: #475569 !important; } 
+        body:not(.dark) .text-slate-500 { color: #1e293b !important; }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="text-slate-900 transition-colors duration-300">
     <div id="root"></div>
 
     <script type="text/babel">
-        // ==========================================
-        // --- SYSTEM HARDWIRING CONFIGURATION ---
-        // ==========================================
+        // --- SYSTEM CONFIG ---
         const SYSTEM_CONFIG = {
             REAL_DATA_LINK: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=1310781873&single=true&output=csv",
             SAMPLE_DATA_LINK: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv",
@@ -48,25 +61,26 @@
         const { useState, useMemo, useEffect, useRef } = React;
         const { 
             BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-            Cell, PieChart, Pie, LineChart, Line, Legend, AreaChart, Area,
+            Cell, LineChart, Line, Legend, AreaChart, Area,
             ReferenceLine, ComposedChart, ScatterChart, Scatter, ZAxis
         } = Recharts;
 
         const Icons = {
-            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-            Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-            Scale: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
-            Award: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
-            Dollar: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-            Refresh: ({ animate }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
-            X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-            Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-            EyeOff: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>,
-            Eye: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Chevron: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-            Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-            Crown: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
-            Coins: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>
+            Globe: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Zap: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            Scale: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
+            Award: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
+            Dollar: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+            Refresh: ({ animate }) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
+            X: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            EyeOff: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>,
+            Eye: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+            Coins: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
+            Moon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+            Sun: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+            Crown: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
         };
 
         const MultiSelect = ({ label, options, selected, onChange }) => {
@@ -79,14 +93,14 @@
             }, []);
             return (
                 <div className="relative flex-1" ref={wrapperRef}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-white text-[10px] font-black px-3 py-2 rounded-xl border border-slate-200 uppercase flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
-                        <span className="truncate mr-2 text-slate-700">{selected === 'All' ? `All ${label}s` : selected}</span>
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-white dark:bg-slate-900 text-[11px] font-black px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 uppercase flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+                        <span className="truncate mr-2 text-slate-700 dark:text-slate-300">{selected === 'All' ? `All ${label}s` : selected}</span>
                         <Icons.Chevron />
                     </button>
                     {isOpen && (
-                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
                             {options.map(opt => (
-                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-4 py-2.5 text-[10px] font-bold uppercase cursor-pointer hover:bg-slate-50 border-b border-slate-50 last:border-0 ${selected === opt ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-4 py-2.5 text-[11px] font-bold uppercase cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-50 dark:border-slate-800 last:border-0 ${selected === opt ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
                                     {opt}
                                 </div>
                             ))}
@@ -94,47 +108,6 @@
                     )}
                 </div>
             );
-        };
-
-        const parseCSV = (text) => {
-            const lines = text.split(/\r?\n/).filter(line => line.trim());
-            if (lines.length < 2) return [];
-            const clean = (val) => (val || "").replace(/^"|"$/g, '').trim();
-            const splitLine = (line) => {
-                const result = []; let current = ''; let inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    if (char === '"') inQuotes = !inQuotes;
-                    else if (char === ',' && !inQuotes) { result.push(clean(current)); current = ''; } 
-                    else { current += char; }
-                }
-                result.push(clean(current)); return result;
-            };
-            const headers = splitLine(lines[0]);
-            return lines.slice(1).map(line => {
-                const values = splitLine(line);
-                const obj = {}; headers.forEach((h, i) => obj[h] = values[i]);
-                return mapCsvToData(obj);
-            }).filter(row => {
-                const cycleId = String(row["Cycle ID"] || row["Cycle"] || "").toLowerCase().trim();
-                return cycleId !== "" && cycleId !== "total" && cycleId !== "grand total" && cycleId !== "summary";
-            });
-        };
-
-        const mapCsvToData = (row) => {
-            const num = (val) => { const p = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(p) ? 0 : p; };
-            const a = num(row["Flower (A)"] || row["Flower A"]);
-            const b = num(row["Smalls (B)"] || row["Smalls B"]);
-            const c = num(row["Trim (C)"] || row["Trim C"]);
-            const lights = num(row["Lights"]) || 24;
-            const net = a + b + c;
-            return {
-                "Cycle ID": row["Cycle ID"] || "N/A",
-                "Room ID": row["Room ID"] || "N/A",
-                "Strain Name": row["Strain Name"] || "Unknown",
-                "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": net,
-                "Lights": lights, "Grams per Light": Number((net / lights).toFixed(2))
-            };
         };
 
         const App = () => {
@@ -148,6 +121,8 @@
             const [showRoomDetails, setShowRoomDetails] = useState(true);
             const [showEntryModal, setShowEntryModal] = useState(false);
             const [revenueMode, setRevenueMode] = useState('rpl'); 
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [targetQuality, setTargetQuality] = useState(70);
 
             const [priceA, setPriceA] = useState(3.97);
             const [priceB, setPriceB] = useState(2.20);
@@ -159,8 +134,50 @@
 
             const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
+            const parseCSV = (text) => {
+                const lines = text.split(/\r?\n/).filter(line => line.trim());
+                if (lines.length < 2) return [];
+                const clean = (val) => (val || "").replace(/^"|"$/g, '').trim();
+                const splitLine = (line) => {
+                    const result = []; let current = ''; let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') inQuotes = !inQuotes;
+                        else if (char === ',' && !inQuotes) { result.push(clean(current)); current = ''; } 
+                        else { current += char; }
+                    }
+                    result.push(clean(current)); return result;
+                };
+                const headers = splitLine(lines[0]);
+                return lines.slice(1).map(line => {
+                    const values = splitLine(line);
+                    const obj = {}; headers.forEach((h, i) => obj[h] = values[i]);
+                    return mapCsvToData(obj);
+                }).filter(d => d["Cycle ID"] !== "" && !String(d["Cycle ID"]).toLowerCase().includes("total"));
+            };
+
+            const mapCsvToData = (row) => {
+                const num = (val) => { const p = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(p) ? 0 : p; };
+                const a = num(row["Flower (A)"] || row["Flower A"] || row["Premium"]);
+                const b = num(row["Smalls (B)"] || row["Smalls B"] || row["Smalls"]);
+                const c = num(row["Trim (C)"] || row["Trim C"] || row["Trim"]);
+                const lights = num(row["Lights"] || row["Light Count"]) || 24;
+                
+                // Fortify parsing: if values are suspiciously small (kg vs g), we don't normalize yet, 
+                // but we ensure net yield isn't zero to avoid division errors.
+                const net = a + b + c;
+
+                return {
+                    "Cycle ID": row["Cycle ID"] || "N/A",
+                    "Room ID": row["Room ID"] || "N/A",
+                    "Strain Name": row["Strain Name"] || "Unknown",
+                    "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, 
+                    "Total Yield (G)": net,
+                    "Lights": lights, "Grams per Light": net > 0 ? Number((net / lights).toFixed(2)) : 0
+                };
+            };
+
             const autoFetch = async (url) => {
-                if (!url) return;
                 setIsLoading(true);
                 try {
                     const finalUrl = `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`;
@@ -168,19 +185,23 @@
                     const text = await response.text();
                     const parsed = parseCSV(text);
                     if (parsed.length > 0) {
-                        setData([...parsed]);
+                        setData(parsed);
                         setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
                     }
                 } catch (e) { console.error(e); } finally { setIsLoading(false); }
             };
 
             const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
-
             useEffect(() => { autoFetch(fetchLink); }, [fetchLink]);
 
-            const cycleOptions = useMemo(() => ['All', ...naturalSort([...new Set(data.map(d => String(d["Cycle ID"])))].filter(x => x && x !== 'N/A'))], [data]);
-            const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].filter(x => x && x !== 'N/A').sort()], [data]);
-            const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].filter(x => x && x !== 'Unknown').sort()], [data]);
+            useEffect(() => {
+                if (isDarkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            }, [isDarkMode]);
+
+            const cycleOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Cycle ID"])))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}))], [data]);
+            const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].sort()], [data]);
+            const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].sort()], [data]);
 
             const filteredData = useMemo(() => {
                 return data.filter(item => {
@@ -190,16 +211,6 @@
                     return cMatch && rMatch && sMatch;
                 });
             }, [data, selectedCycle, selectedRoom, selectedStrain]);
-
-            const facilityAverages = useMemo(() => {
-                const a = data.reduce((acc, c) => acc + c["Flower (A)"], 0);
-                const net = data.reduce((acc, c) => acc + c["Total Yield (G)"], 0);
-                const lights = data.reduce((acc, c) => acc + c["Lights"], 0);
-                return {
-                    gpl: lights > 0 ? (net / lights).toFixed(1) : 0,
-                    mix: net > 0 ? ((a / net) * 100).toFixed(1) : 0
-                };
-            }, [data]);
 
             const stats = useMemo(() => {
                 const a = filteredData.reduce((acc, c) => acc + (c["Flower (A)"] || 0), 0);
@@ -221,21 +232,17 @@
                     flowerA: fmt(a), flowerALb: lb(a),
                     smallsB: fmt(b), smallsBLb: lb(b),
                     trimC: fmt(c), trimCLb: lb(c),
-                    
                     gpl: (netG / lights).toFixed(1),
                     flowerGpl: (a / lights).toFixed(1),
                     smallsGpl: (b / lights).toFixed(1),
                     trimGpl: (c / lights).toFixed(1),
-
                     rpl: (totalRev / lights).toFixed(2),
                     flowerRpl: (revA / lights).toFixed(2),
                     smallsRpl: (revB / lights).toFixed(2),
                     trimRpl: (revC / lights).toFixed(2),
-
                     revA: Math.round(revA).toLocaleString(),
                     revB: Math.round(revB).toLocaleString(),
                     revC: Math.round(revC).toLocaleString(),
-
                     quality: netG > 0 ? ((a / netG) * 100).toFixed(1) : "0",
                     smallsRatio: netG > 0 ? ((b / netG) * 100).toFixed(1) : "0",
                     trimRatio: netG > 0 ? ((c / netG) * 100).toFixed(1) : "0",
@@ -249,20 +256,15 @@
                     const netTotal = rows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
                     const premiumFlower = rows.reduce((acc, r) => acc + r["Flower (A)"], 0);
                     const activeRooms = [...new Set(rows.map(r => r["Room ID"]))].filter(id => id !== "N/A");
-
                     const res = { cycle: c };
-                    
                     if (mixChartView === 'ratio') {
                         res.facilityValue = netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0;
                     } else if (mixChartView === 'volume') {
-                        res.facilityValue = activeRooms.length > 0 
-                            ? Number(((premiumFlower / 1000) / activeRooms.length).toFixed(1)) 
-                            : 0;
+                        res.facilityValue = activeRooms.length > 0 ? Number(((premiumFlower / 1000) / activeRooms.length).toFixed(1)) : 0;
                     } else {
-                        const totalLights = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
-                        res.facilityValue = Number((netTotal / totalLights).toFixed(1));
+                        const lights = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
+                        res.facilityValue = Number((netTotal / lights).toFixed(1));
                     }
-
                     roomOptions.filter(r => r !== 'All').forEach(room => {
                         const roomRows = rows.filter(d => d["Room ID"] === room);
                         const roomNet = roomRows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
@@ -279,14 +281,15 @@
             }, [data, cycleOptions, roomOptions, mixChartView]);
 
             const scatterData = useMemo(() => {
-                return filteredData.map((d, i) => ({
-                    x: d["Grams per Light"],
-                    y: d["Total Yield (G)"] > 0 ? Number(((d["Flower (A)"] / d["Total Yield (G)"]) * 100).toFixed(1)) : 0,
-                    name: d["Strain Name"],
-                    cycle: d["Cycle ID"],
-                    room: d["Room ID"],
-                    id: i
-                }));
+                return filteredData.map((d, i) => {
+                    const net = d["Total Yield (G)"] || 0;
+                    const flr = d["Flower (A)"] || 0;
+                    return {
+                        x: d["Grams per Light"] || 0,
+                        y: net > 0 ? Number(((flr / net) * 100).toFixed(1)) : 0,
+                        name: d["Strain Name"], cycle: d["Cycle ID"], room: d["Room ID"], id: i
+                    };
+                });
             }, [filteredData]);
 
             const strainBenchmark = useMemo(() => {
@@ -343,248 +346,254 @@
             }, [filteredData, roomOptions, strainOptions, selectedStrain, matrixMetric]);
 
             return (
-                <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
-                    <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-sm text-left">
-                        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-                            <div className="flex items-center gap-4 pr-6 border-r border-slate-100 shrink-0">
-                                <div className="bg-emerald-600 p-2.5 rounded-2xl text-white shadow-md"><Icons.Globe /></div>
+                <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} transition-all duration-500 pb-32`}>
+                    <div className={`sticky top-0 z-[100] ${isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'} backdrop-blur-xl border-b px-4 py-4 shadow-md`}>
+                        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-4 text-left">
+                            
+                            <div className="flex items-center gap-5 pr-6 border-r border-slate-500/20 shrink-0">
+                                <div className="bg-emerald-600 p-2 rounded-2xl text-white shadow-md"><Icons.Globe /></div>
                                 <div className="flex flex-col leading-none">
-                                    <h1 className="text-sm font-black italic uppercase text-slate-800 tracking-tighter">Cultivation Intel</h1>
-                                    <div className="flex items-center gap-2 mt-1.5 leading-none">
+                                    <h1 className="text-[12px] font-black italic uppercase tracking-tighter">Cultivation Intel</h1>
+                                    <div className="flex items-center gap-2 mt-2 leading-none">
                                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <p className="text-[10px] font-black uppercase text-slate-400">SYNC: {lastSync || 'Pending'}</p>
+                                        <p className="text-[11px] font-black uppercase text-slate-500">SYNC: {lastSync || 'Pending'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Production</button>
-                                <button onClick={() => setDataSource('sample')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Sample Model</button>
-                            </div>
-
-                            <div className="flex flex-col items-start gap-1">
-                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest ml-1">Live Market Valuation Controls</p>
-                                <div className="flex items-center gap-8 bg-slate-100/50 px-10 py-2 rounded-2xl border border-slate-200 shadow-inner min-w-[550px]">
-                                    <Icons.Coins />
-                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
-                                        <div key={p.l} className="flex flex-col gap-1 flex-1">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">{p.l}:</span>
-                                            <div className="flex items-center">
-                                                <span className="text-slate-400 text-sm mr-1">$</span>
-                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1.5 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
-                                            </div>
-                                        </div>
-                                    ))}
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2.5 rounded-xl transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-200 text-slate-600'} shadow-sm`}>
+                                    {isDarkMode ? <Icons.Sun /> : <Icons.Moon />}
+                                </button>
+                                <div className="flex items-center gap-2 bg-slate-200/50 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-500/10">
+                                    <button onClick={() => setDataSource('live')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white dark:bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-500'}`}>Live Prod</button>
+                                    <button onClick={() => setDataSource('sample')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white dark:bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-500'}`}>Sample</button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 flex-1 justify-center max-w-lg">
+                            <div className="flex flex-col items-start gap-1">
+                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 leading-none mb-1">Market Logic Console</p>
+                                {/* CONSOLE HARD-LOCKED TO LIGHT MODE BACKGROUND FOR VISIBILITY */}
+                                <div className="flex items-center gap-8 bg-slate-100 px-10 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[720px] text-slate-900">
+                                    <Icons.Coins />
+                                    {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
+                                        <div key={p.l} className="flex items-center gap-2 flex-1">
+                                            <span className="text-[12px] font-bold text-slate-600 uppercase whitespace-nowrap">{p.l}:</span>
+                                            <div className="flex items-center">
+                                                <span className="text-slate-400 text-[13px] mr-1">$</span>
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[13px] font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black text-slate-600 uppercase whitespace-nowrap">Goal %:</span>
+                                        <input type="number" value={targetQuality} onChange={e => setTargetQuality(parseInt(e.target.value))} className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[13px] font-black w-20 focus:border-amber-500 shadow-sm outline-none" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 flex-1 justify-center max-w-xl">
                                 <MultiSelect label="Cycle" options={cycleOptions} selected={selectedCycle} onChange={setSelectedCycle} />
                                 <MultiSelect label="Room" options={roomOptions} selected={selectedRoom} onChange={setSelectedRoom} />
                                 <MultiSelect label="Strain" options={strainOptions} selected={selectedStrain} onChange={setSelectedStrain} />
                             </div>
 
-                            <div className="flex items-center gap-3 shrink-0">
-                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-3 rounded-2xl shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
-                                <button onClick={() => autoFetch(fetchLink)} className="bg-slate-900 text-white p-3 rounded-2xl transition-all"><Icons.Refresh animate={isLoading} /></button>
+                            <div className="flex items-center gap-4 shrink-0">
+                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-4 rounded-[1.25rem] shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-3 font-black text-[12px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
+                                <button onClick={() => autoFetch(fetchLink)} className={`p-4 rounded-[1.25rem] transition-all shadow-md ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-900 hover:bg-slate-800'} text-white`}><Icons.Refresh animate={isLoading} /></button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center flex flex-col gap-10">
+                    <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center flex flex-col gap-12">
                         {/* KPI GRID */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-                            {/* NET USABLE HARVEST CARD */}
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
-                                <div className="flex justify-between items-start mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
+                            {/* HARVEST CARD */}
+                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p>
-                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.totalKg}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">kg</span></h3>
-                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">({stats.totalLb} lb total)</p>
+                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.totalKg}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">kg</span></h3>
+                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">({stats.totalLb} lb total)</p>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-emerald-500 text-white shadow-lg"><Icons.Scale /></div>
+                                    <div className="p-5 rounded-2xl bg-emerald-500 text-white shadow-lg"><Icons.Scale /></div>
                                 </div>
-                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
                                     {[
-                                        { l: 'FLOWER (A)', v: stats.flowerA, lb: stats.flowerALb, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'FLOWER (A)', v: stats.flowerA, lb: stats.flowerALb, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
                                         { l: 'SMALLS (B)', v: stats.smallsB, lb: stats.smallsBLb, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                        { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-600', bg: 'bg-amber-500/5' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
-                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
                                             <div className="text-right leading-none">
-                                                <p className={`text-[13px] font-black ${b.c}`}>{b.v}kg</p>
-                                                <p className="text-[9px] font-bold text-slate-400/60 mt-1 uppercase">({b.lb}lb)</p>
+                                                <p className={`text-[15px] font-black ${b.c}`}>{b.v}kg</p>
+                                                <p className="text-[11px] font-bold text-slate-500/50 mt-1 uppercase">({b.lb}lb)</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* EFFICIENCY CARD (GPL BREAKDOWN) */}
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
-                                <div className="flex justify-between items-start mb-6">
+                            {/* EFFICIENCY CARD */}
+                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p>
-                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.gpl}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">GPL</span></h3>
-                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">Industrial Density</p>
+                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.gpl}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">GPL</span></h3>
+                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Industrial Density</p>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-blue-500 text-white shadow-lg"><Icons.Zap /></div>
+                                    <div className="p-5 rounded-2xl bg-blue-500 text-white shadow-lg"><Icons.Zap /></div>
                                 </div>
-                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
                                     {[
-                                        { l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
                                         { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                        { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-500/5' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
-                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[13px] font-black ${b.c}`}>{b.v}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
                             {/* QUALITY RATIO CARD */}
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
-                                <div className="flex justify-between items-start mb-6">
+                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
-                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.quality}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">%</span></h3>
-                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">Goal: 70% Mix</p>
+                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.quality}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">%</span></h3>
+                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Goal: {targetQuality}%</p>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
+                                    <div className="p-5 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
                                 </div>
-                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
                                     {[
-                                        { l: 'FLOWER %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'FLOWER %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
                                         { l: 'SMALLS %', v: stats.smallsRatio, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                        { l: 'TRIM %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-500/5' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
-                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[13px] font-black ${b.c}`}>{b.v}%</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}%</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* REVENUE VELOCITY CARD (WITH MODE SWITCH) */}
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
-                                <div className="flex justify-between items-start mb-6">
+                            {/* REVENUE VELOCITY CARD */}
+                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-100 mb-2 w-fit">
-                                            <button onClick={() => setRevenueMode('rpl')} className={`px-2 py-1 text-[8px] font-black uppercase rounded ${revenueMode === 'rpl' ? 'bg-white shadow text-purple-600' : 'text-slate-400'}`}>RPL</button>
-                                            <button onClick={() => setRevenueMode('total')} className={`px-2 py-1 text-[8px] font-black uppercase rounded ${revenueMode === 'total' ? 'bg-white shadow text-purple-600' : 'text-slate-400'}`}>Total</button>
+                                        <div className={`flex items-center gap-2 p-1.5 rounded-lg border mb-3 w-fit ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
+                                            <button onClick={() => setRevenueMode('rpl')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'rpl' ? 'bg-white dark:bg-slate-600 shadow text-purple-600' : 'text-slate-500'}`}>RPL</button>
+                                            <button onClick={() => setRevenueMode('total')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'total' ? 'bg-white dark:bg-slate-600 shadow text-purple-600' : 'text-slate-500'}`}>Total</button>
                                         </div>
-                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">
                                             {revenueMode === 'rpl' ? `$${stats.rpl}` : `$${stats.revenue}`}
-                                            <span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">{revenueMode === 'rpl' ? '/Light' : ''}</span>
+                                            <span className="text-[16px] font-normal text-slate-500 ml-1 italic">{revenueMode === 'rpl' ? '/Light' : ''}</span>
                                         </h3>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Industrial Valuation</p>
+                                        <p className="text-[12px] text-slate-500 font-black uppercase tracking-widest mt-2 tracking-wide">Operational Valuation</p>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-purple-500 text-white shadow-lg"><Icons.Dollar /></div>
+                                    <div className="p-5 rounded-2xl bg-purple-500 text-white shadow-lg"><Icons.Dollar /></div>
                                 </div>
-                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
                                     {[
-                                        { l: 'FLOWER', v: revenueMode === 'rpl' ? `$${stats.flowerRpl}` : `$${stats.revA}`, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
-                                        { l: 'SMALLS', v: revenueMode === 'rpl' ? `$${stats.smallsRpl}` : `$${stats.revB}`, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM', v: revenueMode === 'rpl' ? `$${stats.trimRpl}` : `$${stats.revC}`, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                        { l: 'FLOWER REV', v: revenueMode === 'rpl' ? `$${stats.flowerRpl}` : `$${stats.revA}`, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
+                                        { l: 'SMALLS REV', v: revenueMode === 'rpl' ? `$${stats.smallsRpl}` : `$${stats.revB}`, c: 'text-blue-600', bg: 'bg-blue-50/50' },
+                                        { l: 'TRIM REV', v: revenueMode === 'rpl' ? `$${stats.trimRpl}` : `$${stats.revC}`, c: 'text-amber-600', bg: 'bg-amber-500/5' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white shadow-sm`}>
-                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[13px] font-black ${b.c}`}>{b.v}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* MODULE 1: BATCH STRATEGY MAP (INDIVIDUAL ROW) */}
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Batch Strategy Map</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Efficiency vs Flower Grade (Target Range Analysis)</p></div>
-                                <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600"><Icons.Target /></div>
+                        {/* CHARTS */}
+                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Batch Strategy Map</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency vs Flower Grade (Hover dots for Cycle/Room context)</p></div>
                             </div>
-                            <div className="h-[450px] w-full">
+                            <div className="h-[500px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 10, fontWeight: 900}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 10, fontWeight: 900 }} />
-                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 10, fontWeight: 900}} domain={[65, 95]} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 10, fontWeight: 900 }} />
-                                        <Tooltip 
-                                            cursor={{ strokeDasharray: '3 3' }} 
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                    const d = payload[0].payload;
-                                                    return (
-                                                        <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl border border-slate-800 text-left min-w-[150px]">
-                                                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">{d.name}</p>
-                                                            <div className="space-y-1">
-                                                                <p className="text-[9px] flex justify-between gap-4"><span className="text-slate-400 uppercase">Cycle:</span> <span className="font-bold">{d.cycle}</span></p>
-                                                                <p className="text-[9px] flex justify-between gap-4"><span className="text-slate-400 uppercase">Room:</span> <span className="font-bold">{d.room}</span></p>
-                                                                <p className="text-[9px] flex justify-between gap-4 border-t border-white/10 pt-1 mt-1"><span className="text-slate-400 uppercase">Efficiency:</span> <span className="font-bold text-blue-400">{d.x} GPL</span></p>
-                                                                <p className="text-[9px] flex justify-between gap-4"><span className="text-slate-400 uppercase">Quality:</span> <span className="font-bold text-amber-400">{d.y}%</span></p>
-                                                            </div>
+                                    <ScatterChart margin={{ top: 20, right: 40, bottom: 20, left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} />
+                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} domain={[65, 95]} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} />
+                                        <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                                            if (active && payload && payload.length) {
+                                                const d = payload[0].payload;
+                                                return (
+                                                    <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl border border-slate-800 text-left min-w-[200px]">
+                                                        <p className="text-[13px] font-black text-emerald-400 uppercase tracking-widest mb-2">{d.name}</p>
+                                                        <div className="space-y-1.5">
+                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Cycle:</span> <span className="font-bold">{d.cycle}</span></p>
+                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Room:</span> <span className="font-bold">{d.room}</span></p>
+                                                            <p className="text-[12px] flex justify-between gap-6 border-t border-white/10 pt-2 mt-2 font-black"><span className="text-slate-400">EFFICIENCY:</span> <span className="text-blue-400">{d.x} GPL</span></p>
+                                                            <p className="text-[12px] flex justify-between gap-6 font-black"><span className="text-slate-400">QUALITY:</span> <span className="text-amber-400">{d.y}%</span></p>
                                                         </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                        />
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }} />
                                         <Scatter name="Batches" data={scatterData}>
                                             {scatterData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} fillOpacity={0.6} />)}
                                         </Scatter>
-                                        <ReferenceLine x={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" label={{ value: '100 GPL', position: 'top', fill: '#10b981', fontSize: 10, fontWeight: 900 }} />
-                                        <ReferenceLine y={70} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" label={{ value: '70% TARGET', position: 'right', fill: '#f59e0b', fontSize: 10, fontWeight: 900 }} />
+                                        <ReferenceLine x={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" label={{ value: '100 GPL', position: 'top', fill: '#10b981', fontSize: 13, fontWeight: 900 }} />
+                                        <ReferenceLine y={targetQuality} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" label={{ value: `${targetQuality}% TARGET`, position: 'right', fill: '#f59e0b', fontSize: 13, fontWeight: 900 }} />
                                     </ScatterChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* MODULE 2: PREMIUM MARKET MIX (INDIVIDUAL ROW) */}
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-left performance-card overflow-hidden">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 leading-none">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600"><Icons.Award /></div>
-                                    <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none text-emerald-800">Premium Market Mix</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Variance vs Industrial Standard (70%)</p></div>
+                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm text-left performance-card overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
+                                <div className="flex items-center gap-5">
+                                    <div className="bg-emerald-50/10 p-4 rounded-2xl text-emerald-500"><Icons.Award /></div>
+                                    <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Premium Market Mix</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Variance vs Goal ({targetQuality}%)</p></div>
                                 </div>
-                                <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                                    <button onClick={() => setShowRoomDetails(!showRoomDetails)} title="Toggle Room Detail" className={`p-2.5 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
-                                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                                <div className="flex items-center gap-4 bg-slate-50/10 p-2 rounded-2xl border border-slate-500/10 shadow-sm">
+                                    <button onClick={() => setShowRoomDetails(!showRoomDetails)} className={`p-3 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-950 text-white shadow-lg' : 'bg-white text-slate-500'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+                                    <div className="h-6 w-px bg-slate-500/20 mx-1"></div>
                                     {['ratio', 'volume', 'gpl'].map(m => (
-                                        <button key={m} onClick={() => setMixChartView(m)} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${mixChartView === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400 hover:bg-slate-50'}`}>{m}</button>
+                                        <button key={m} onClick={() => setMixChartView(m)} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${mixChartView === m ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-500' : 'text-slate-500'}`}>{m}</button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="h-[400px] w-full">
+                            <div className="h-[450px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ComposedChart data={cycleTrendData}>
                                         <defs>
                                             <linearGradient id="colorMix" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                        <XAxis dataKey="cycle" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{fontSize: 10, fontWeight: 900}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="cycle" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
                                         <Tooltip />
                                         <Legend verticalAlign="top" height={40}/>
-                                        <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" animationDuration={1000} />
-                                        {mixChartView === 'ratio' && <ReferenceLine y={70} stroke="#f43f5e" strokeWidth={2} strokeDasharray="3 3" label={{ position: 'right', value: '70% GOAL', fill: '#f43f5e', fontSize: 10, fontWeight: 900 }} />}
+                                        <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" />
+                                        {mixChartView === 'ratio' && <ReferenceLine y={targetQuality} stroke="#f43f5e" strokeWidth={2} strokeDasharray="3 3" label={{ position: 'right', value: `${targetQuality}% GOAL`, fill: '#f43f5e', fontSize: 13, fontWeight: 900 }} />}
                                         {showRoomDetails && roomOptions.filter(r => r !== 'All').map((room, i) => (
-                                            <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} opacity={0.8} />
+                                            <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2.5} strokeDasharray="6 4" dot={{ r: 4 }} opacity={0.8} />
                                         ))}
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* ROW 3: GENETIC BENCHMARKING */}
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-left performance-card">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Performance KPIs per cultivar selection</p></div>
-                                <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Cultivar selection</p></div>
+                                <div className="flex bg-slate-50/10 p-1.5 rounded-2xl border border-slate-500/10 shadow-sm">
                                     {['yield', 'gpl'].map(m => (
-                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
+                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[12px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-600' : 'text-slate-500 hover:text-slate-600'}`}>{m}</button>
                                     ))}
                                 </div>
                             </div>
@@ -592,8 +601,8 @@
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
-                                        <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
+                                        <YAxis tick={{ fontSize: 13, fill: isDarkMode ? '#94a3b8' : '#475569', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
                                         <Tooltip />
                                         <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={40}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
                                     </BarChart>
@@ -601,14 +610,14 @@
                             </div>
                         </div>
 
-                        {/* ROW 4: LEADERBOARD */}
-                        <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
+                        {/* LEADERBOARD */}
+                        <div className={`p-14 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mt-2 italic text-center">Room Rankings by Operational Performance</p></div>
-                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200 shadow-sm">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase px-4 tracking-widest">Sort Strategy:</span>
-                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL (Weight)</button>
-                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Mix (Grade)</button>
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Room Rankings by Operational Performance Score</p></div>
+                                <div className="flex items-center gap-2 bg-slate-50/10 p-2 rounded-2xl border border-slate-500/10 shadow-sm">
+                                    <span className="text-[12px] font-black text-slate-500 uppercase px-4 tracking-widest">Sort Strategy:</span>
+                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>GPL (Weight)</button>
+                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>Mix (Grade)</button>
                                 </div>
                             </div>
                             <div className="h-[500px] w-full">
@@ -616,26 +625,26 @@
                                     <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 120 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
                                         <XAxis type="number" domain={[0, 200]} hide />
-                                        <YAxis dataKey="name" type="category" tick={{fontSize: 15, fontStyle: 'italic', fontWeight: 900, fill: '#1e293b'}} width={100} axisLine={false} tickLine={false} />
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 17, fontStyle: 'italic', fontWeight: 900, fill: isDarkMode ? '#e2e8f0' : '#1e293b'}} width={100} axisLine={false} tickLine={false} />
                                         <Tooltip cursor={{fill: '#f8fafc'}} content={({active, payload}) => {
                                             if (active && payload && payload.length) {
                                                 const d = payload[0].payload;
                                                 return (
-                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[220px]">
+                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[240px]">
                                                         <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 text-left leading-none">
                                                             <Icons.Crown />
                                                             <p className="text-sm font-black uppercase tracking-widest">{d.name}</p>
                                                         </div>
                                                         <div className="space-y-2 text-left leading-none mt-4">
-                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
-                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
+                                                            <p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
+                                                            <p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
                                                         </div>
                                                     </div>
                                                 );
                                             }
                                             return null;
                                         }}/>
-                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 11, fontWeight: 900 }} />
+                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 13, fontWeight: 900 }} />
                                         <Bar dataKey="sortVal" name="Score" radius={[0, 20, 20, 0]} barSize={50}>
                                             {roomBenchmark.map((entry, i) => (
                                                 <Cell key={i} fill={ i === 0 ? '#10b981' : entry.sortVal > (leaderboardSort === 'mix' ? 75 : 90) ? '#3b82f6' : entry.sortVal > (leaderboardSort === 'mix' ? 50 : 60) ? '#f59e0b' : '#f43f5e' } />
@@ -646,31 +655,31 @@
                             </div>
                         </div>
 
-                        {/* ROW 5: FACILITY YIELD MATRIX */}
-                        <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card text-left">
-                            <div className="px-12 py-16 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-8 leading-none">
-                                <div><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Facility Yield Matrix</h2><p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Room (Kg & Lb Integration)</p></div>
-                                <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
-                                    <button onClick={() => setMatrixMetric('yield')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg/Lb)</button>
+                        {/* MATRIX */}
+                        <div className={`rounded-[3.5rem] border border-slate-500/10 shadow-sm overflow-hidden mb-20 performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="px-14 py-16 border-b border-slate-500/10 bg-slate-500/5 flex flex-col md:flex-row justify-between items-center gap-10 leading-none">
+                                <div><h2 className="text-[36px] font-black italic uppercase tracking-tighter leading-none text-left">Facility Yield Matrix</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-4 italic leading-none text-left">Efficiency Breakdown Per Room (Dual KG/LB Scale)</p></div>
+                                <div className="flex items-center gap-5 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-500/10 shadow-sm">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Volume (Kg/Lb)</button>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto custom-scrollbar">
                                 <table className="w-full border-collapse">
-                                    <thead><tr className="text-[12px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-12 py-10 border-b border-slate-100 text-slate-500">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-10 py-10 text-center border-b border-slate-100 text-slate-500">{r}</th>)}</tr></thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <thead><tr className="text-[15px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10"><th className="px-14 py-11 border-b border-slate-500/10 text-left">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-11 py-11 text-center border-b border-slate-500/10">{r}</th>)}</tr></thead>
+                                    <tbody className="divide-y divide-slate-500/10">
                                         {strainRoomMatrix.map((row, i) => (
-                                            <tr key={i} className="hover:bg-slate-50 group transition-colors">
-                                                <td className="px-12 py-9 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-sm tracking-tight">{row.strain}</td>
+                                            <tr key={i} className="hover:bg-slate-500/5 group transition-colors">
+                                                <td className="px-14 py-10 font-black text-slate-700 dark:text-slate-200 italic uppercase border-r border-slate-500/5 text-[17px] tracking-tight text-left">{row.strain}</td>
                                                 {roomOptions.filter(r => r !== 'All').map(r => {
                                                     const val = row[r];
                                                     const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
                                                     const lbs = val !== '-' && matrixMetric === 'yield' ? `(${ (val * KG_TO_LB).toFixed(1) }lb)` : '';
                                                     return (
-                                                        <td key={r} className="px-10 py-9 text-center">
-                                                            <div className={`inline-block px-4 py-3 rounded-2xl font-mono font-bold text-sm ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>
+                                                        <td key={r} className="px-11 py-10 text-center">
+                                                            <div className={`inline-block px-7 py-4 rounded-3xl font-mono font-bold text-[17px] ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-500/10 text-slate-500 opacity-60'}`}>
                                                                 <p>{val}{matrixMetric === 'yield' ? 'kg' : ''}</p>
-                                                                {lbs && <p className="text-[9px] opacity-70 mt-1">{lbs}</p>}
+                                                                {lbs && <p className="text-[12px] opacity-70 mt-1.5">{lbs}</p>}
                                                             </div>
                                                         </td>
                                                     );
@@ -683,18 +692,14 @@
                         </div>
                     </div>
 
-                    {/* MODAL: DATA ENTRY */}
+                    {/* MODALS */}
                     {showEntryModal && (
-                        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
                             <div className="bg-white rounded-[3.5rem] w-full max-w-5xl h-[92vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
                                 <div className="absolute top-8 right-8 z-10">
-                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm">
-                                        <Icons.X />
-                                    </button>
+                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm"><Icons.X /></button>
                                 </div>
-                                <div className="h-full w-full bg-slate-50">
-                                    <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Production Entry Form">Loading form...</iframe>
-                                </div>
+                                <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Production Entry Form">Loading form...</iframe>
                             </div>
                         </div>
                     )}
