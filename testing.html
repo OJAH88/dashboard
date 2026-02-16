@@ -19,32 +19,55 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
-        /* Increase base font size by 1pt (approx 1.33px) */
+        /* Permanent font size increase (+1pt) */
         html { font-size: 17.33px; } 
 
-        body { font-family: 'Inter', sans-serif; overflow-x: hidden; transition: background-color 0.3s ease; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
-            stroke: currentColor;
-            opacity: 0.1;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            background-color: #020617; /* Deepest Midnight */
+            color: #f1f5f9;
         }
         
-        .performance-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .performance-card:hover { transform: translateY(-4px); }
-
-        /* Dark Mode High-Contrast Grey Fonts */
-        .dark .text-slate-400 { color: #94a3b8 !important; } /* Lighter grey for dark mode */
-        .dark .text-slate-500 { color: #cbd5e1 !important; } /* Much lighter grey for dark mode */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         
-        /* Light Mode Darkened Grey Fonts for contrast */
-        body:not(.dark) .text-slate-400 { color: #475569 !important; } 
-        body:not(.dark) .text-slate-500 { color: #1e293b !important; }
+        .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
+            stroke: #334155;
+            opacity: 0.4;
+        }
+        
+        .performance-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background-color: #0f172a; /* Slate 900 */
+            border: 1px solid #1e293b; /* Slate 800 */
+        }
+        .performance-card:hover { 
+            transform: translateY(-4px); 
+            border-color: #334155;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* High-Contrast Gray Fonts recalibrated for permanent Dark Mode */
+        .text-slate-400 { color: #94a3b8 !important; } /* Secondary text */
+        .text-slate-500 { color: #e2e8f0 !important; } /* Primary data descriptions */
+        
+        input, select {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+        }
+
+        /* Tooltip Styling */
+        .recharts-default-tooltip {
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+            border-radius: 12px !important;
+        }
     </style>
 </head>
-<body class="text-slate-900 transition-colors duration-300">
+<body class="transition-colors duration-300">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -78,8 +101,6 @@
             Eye: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
             Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             Coins: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
-            Moon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
-            Sun: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
             Crown: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
         };
 
@@ -93,14 +114,14 @@
             }, []);
             return (
                 <div className="relative flex-1" ref={wrapperRef}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-white dark:bg-slate-900 text-[11px] font-black px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 uppercase flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
-                        <span className="truncate mr-2 text-slate-700 dark:text-slate-300">{selected === 'All' ? `All ${label}s` : selected}</span>
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-slate-900 text-[11px] font-black px-3 py-2 rounded-xl border border-slate-800 uppercase flex items-center justify-between shadow-sm hover:border-slate-700 transition-all text-slate-300">
+                        <span className="truncate mr-2">{selected === 'All' ? `All ${label}s` : selected}</span>
                         <Icons.Chevron />
                     </button>
                     {isOpen && (
-                        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
+                        <div className="absolute top-full left-0 w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[200] max-h-64 overflow-y-auto custom-scrollbar">
                             {options.map(opt => (
-                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-4 py-2.5 text-[11px] font-bold uppercase cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-50 dark:border-slate-800 last:border-0 ${selected === opt ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-4 py-2.5 text-[11px] font-bold uppercase cursor-pointer hover:bg-slate-800 border-b border-slate-800 last:border-0 ${selected === opt ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400'}`}>
                                     {opt}
                                 </div>
                             ))}
@@ -121,7 +142,6 @@
             const [showRoomDetails, setShowRoomDetails] = useState(true);
             const [showEntryModal, setShowEntryModal] = useState(false);
             const [revenueMode, setRevenueMode] = useState('rpl'); 
-            const [isDarkMode, setIsDarkMode] = useState(false);
             const [targetQuality, setTargetQuality] = useState(70);
 
             const [priceA, setPriceA] = useState(3.97);
@@ -153,7 +173,12 @@
                     const values = splitLine(line);
                     const obj = {}; headers.forEach((h, i) => obj[h] = values[i]);
                     return mapCsvToData(obj);
-                }).filter(d => d["Cycle ID"] !== "" && !String(d["Cycle ID"]).toLowerCase().includes("total"));
+                }).filter(d => 
+                    // CRITICAL: Filter out "Ghost Rows" where Cycle ID is missing or Yield is non-existent
+                    d["Cycle ID"] !== "N/A" && 
+                    d["Strain Name"] !== "Unknown" && 
+                    d["Total Yield (G)"] > 0
+                );
             };
 
             const mapCsvToData = (row) => {
@@ -162,11 +187,7 @@
                 const b = num(row["Smalls (B)"] || row["Smalls B"] || row["Smalls"]);
                 const c = num(row["Trim (C)"] || row["Trim C"] || row["Trim"]);
                 const lights = num(row["Lights"] || row["Light Count"]) || 24;
-                
-                // Fortify parsing: if values are suspiciously small (kg vs g), we don't normalize yet, 
-                // but we ensure net yield isn't zero to avoid division errors.
                 const net = a + b + c;
-
                 return {
                     "Cycle ID": row["Cycle ID"] || "N/A",
                     "Room ID": row["Room ID"] || "N/A",
@@ -193,11 +214,6 @@
 
             const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
             useEffect(() => { autoFetch(fetchLink); }, [fetchLink]);
-
-            useEffect(() => {
-                if (isDarkMode) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-            }, [isDarkMode]);
 
             const cycleOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Cycle ID"])))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}))], [data]);
             const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].sort()], [data]);
@@ -262,8 +278,8 @@
                     } else if (mixChartView === 'volume') {
                         res.facilityValue = activeRooms.length > 0 ? Number(((premiumFlower / 1000) / activeRooms.length).toFixed(1)) : 0;
                     } else {
-                        const lights = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
-                        res.facilityValue = Number((netTotal / lights).toFixed(1));
+                        const totalLights = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
+                        res.facilityValue = Number((netTotal / totalLights).toFixed(1));
                     }
                     roomOptions.filter(r => r !== 'All').forEach(room => {
                         const roomRows = rows.filter(d => d["Room ID"] === room);
@@ -346,33 +362,29 @@
             }, [filteredData, roomOptions, strainOptions, selectedStrain, matrixMetric]);
 
             return (
-                <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} transition-all duration-500 pb-32`}>
-                    <div className={`sticky top-0 z-[100] ${isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'} backdrop-blur-xl border-b px-4 py-4 shadow-md`}>
+                <div className="min-h-screen bg-slate-950 text-slate-100 transition-all duration-500 pb-32">
+                    {/* STICKY HEADER */}
+                    <div className="sticky top-0 z-[100] bg-slate-900 border-b border-slate-800 px-4 py-4 shadow-xl">
                         <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-4 text-left">
                             
-                            <div className="flex items-center gap-5 pr-6 border-r border-slate-500/20 shrink-0">
+                            <div className="flex items-center gap-5 pr-6 border-r border-slate-800 shrink-0">
                                 <div className="bg-emerald-600 p-2 rounded-2xl text-white shadow-md"><Icons.Globe /></div>
                                 <div className="flex flex-col leading-none">
-                                    <h1 className="text-[12px] font-black italic uppercase tracking-tighter">Cultivation Intel</h1>
+                                    <h1 className="text-[13px] font-black italic uppercase tracking-tighter">Cultivation Intel</h1>
                                     <div className="flex items-center gap-2 mt-2 leading-none">
                                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <p className="text-[11px] font-black uppercase text-slate-500">SYNC: {lastSync || 'Pending'}</p>
+                                        <p className="text-[12px] font-black uppercase text-slate-400">SYNC: {lastSync || 'Pending'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2.5 rounded-xl transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-200 text-slate-600'} shadow-sm`}>
-                                    {isDarkMode ? <Icons.Sun /> : <Icons.Moon />}
-                                </button>
-                                <div className="flex items-center gap-2 bg-slate-200/50 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-500/10">
-                                    <button onClick={() => setDataSource('live')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white dark:bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-500'}`}>Live Prod</button>
-                                    <button onClick={() => setDataSource('sample')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white dark:bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-500'}`}>Sample</button>
-                                </div>
+                            <div className="flex items-center gap-3 bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+                                <button onClick={() => setDataSource('live')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Prod</button>
+                                <button onClick={() => setDataSource('sample')} className={`px-5 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-slate-700 shadow-lg text-emerald-600' : 'text-slate-400'}`}>Sample</button>
                             </div>
 
                             <div className="flex flex-col items-start gap-1">
-                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1 leading-none mb-1">Market Logic Console</p>
+                                <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest ml-1 leading-none mb-1">Market Logic Console</p>
                                 {/* CONSOLE HARD-LOCKED TO LIGHT MODE BACKGROUND FOR VISIBILITY */}
                                 <div className="flex items-center gap-8 bg-slate-100 px-10 py-3 rounded-2xl border border-slate-200 shadow-inner min-w-[720px] text-slate-900">
                                     <Icons.Coins />
@@ -400,8 +412,8 @@
                             </div>
 
                             <div className="flex items-center gap-4 shrink-0">
-                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-4 rounded-[1.25rem] shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-3 font-black text-[12px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
-                                <button onClick={() => autoFetch(fetchLink)} className={`p-4 rounded-[1.25rem] transition-all shadow-md ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-900 hover:bg-slate-800'} text-white`}><Icons.Refresh animate={isLoading} /></button>
+                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-4 rounded-[1.25rem] shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-3 font-black text-[13px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
+                                <button onClick={() => autoFetch(fetchLink)} className="bg-slate-800 hover:bg-slate-700 text-white p-4 rounded-[1.25rem] transition-all shadow-md"><Icons.Refresh animate={isLoading} /></button>
                             </div>
                         </div>
                     </div>
@@ -410,26 +422,26 @@
                         {/* KPI GRID */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
                             {/* HARVEST CARD */}
-                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group">
                                 <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p>
-                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.totalKg}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">kg</span></h3>
-                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">({stats.totalLb} lb total)</p>
+                                        <p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.totalKg}<span className="text-[17px] font-normal text-slate-400 ml-1 italic">kg</span></h3>
+                                        <p className="text-[14px] font-bold text-slate-500 mt-2 uppercase tracking-wide">({stats.totalLb} lb total)</p>
                                     </div>
                                     <div className="p-5 rounded-2xl bg-emerald-500 text-white shadow-lg"><Icons.Scale /></div>
                                 </div>
-                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
                                     {[
-                                        { l: 'FLOWER (A)', v: stats.flowerA, lb: stats.flowerALb, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
-                                        { l: 'SMALLS (B)', v: stats.smallsB, lb: stats.smallsBLb, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-600', bg: 'bg-amber-500/5' }
+                                        { l: 'FLOWER (A)', v: stats.flowerA, lb: stats.flowerALb, c: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                                        { l: 'SMALLS (B)', v: stats.smallsB, lb: stats.smallsBLb, c: 'text-blue-500', bg: 'bg-blue-50/10' },
+                                        { l: 'TRIM (C)', v: stats.trimC, lb: stats.trimCLb, c: 'text-amber-500', bg: 'bg-amber-500/10' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
-                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
                                             <div className="text-right leading-none">
                                                 <p className={`text-[15px] font-black ${b.c}`}>{b.v}kg</p>
-                                                <p className="text-[11px] font-bold text-slate-500/50 mt-1 uppercase">({b.lb}lb)</p>
+                                                <p className="text-[11px] font-bold text-slate-500/60 mt-1 uppercase">({b.lb}lb)</p>
                                             </div>
                                         </div>
                                     ))}
@@ -437,78 +449,78 @@
                             </div>
 
                             {/* EFFICIENCY CARD */}
-                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group">
                                 <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p>
-                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.gpl}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">GPL</span></h3>
-                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Industrial Density</p>
+                                        <p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.gpl}<span className="text-[17px] font-normal text-slate-400 ml-1 italic">GPL</span></h3>
+                                        <p className="text-[14px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Industrial Density</p>
                                     </div>
                                     <div className="p-5 rounded-2xl bg-blue-500 text-white shadow-lg"><Icons.Zap /></div>
                                 </div>
-                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
                                     {[
-                                        { l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
-                                        { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-500/5' }
+                                        { l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                                        { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-500', bg: 'bg-blue-50/10' },
+                                        { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-500/10' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
-                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[16px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
                             {/* QUALITY RATIO CARD */}
-                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group">
                                 <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <p className="text-slate-500 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
-                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">{stats.quality}<span className="text-[16px] font-normal text-slate-500 ml-1 italic">%</span></h3>
-                                        <p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Goal: {targetQuality}%</p>
+                                        <p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.quality}<span className="text-[17px] font-normal text-slate-400 ml-1 italic">%</span></h3>
+                                        <p className="text-[14px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Goal: {targetQuality}%</p>
                                     </div>
                                     <div className="p-5 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
                                 </div>
-                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
                                     {[
-                                        { l: 'FLOWER %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
-                                        { l: 'SMALLS %', v: stats.smallsRatio, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-500/5' }
+                                        { l: 'FLOWER %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                                        { l: 'SMALLS %', v: stats.smallsRatio, c: 'text-blue-500', bg: 'bg-blue-50/10' },
+                                        { l: 'TRIM %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-500/10' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
-                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}%</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[16px] font-black ${b.c}`}>{b.v}%</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
                             {/* REVENUE VELOCITY CARD */}
-                            <div className={`p-9 rounded-[3rem] shadow-sm border border-slate-500/10 performance-card overflow-hidden group ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                            <div className="p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group">
                                 <div className="flex justify-between items-start mb-8 leading-none">
                                     <div>
-                                        <div className={`flex items-center gap-2 p-1.5 rounded-lg border mb-3 w-fit ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-                                            <button onClick={() => setRevenueMode('rpl')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'rpl' ? 'bg-white dark:bg-slate-600 shadow text-purple-600' : 'text-slate-500'}`}>RPL</button>
-                                            <button onClick={() => setRevenueMode('total')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'total' ? 'bg-white dark:bg-slate-600 shadow text-purple-600' : 'text-slate-500'}`}>Total</button>
+                                        <div className="flex items-center gap-2 p-1.5 rounded-lg border border-slate-700 bg-slate-800 mb-3 w-fit">
+                                            <button onClick={() => setRevenueMode('rpl')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'rpl' ? 'bg-slate-600 shadow text-purple-400' : 'text-slate-400'}`}>RPL</button>
+                                            <button onClick={() => setRevenueMode('total')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${revenueMode === 'total' ? 'bg-slate-600 shadow text-purple-400' : 'text-slate-400'}`}>Total</button>
                                         </div>
-                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none">
+                                        <h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">
                                             {revenueMode === 'rpl' ? `$${stats.rpl}` : `$${stats.revenue}`}
-                                            <span className="text-[16px] font-normal text-slate-500 ml-1 italic">{revenueMode === 'rpl' ? '/Light' : ''}</span>
+                                            <span className="text-[17px] font-normal text-slate-400 ml-1 italic">{revenueMode === 'rpl' ? '/Light' : ''}</span>
                                         </h3>
                                         <p className="text-[12px] text-slate-500 font-black uppercase tracking-widest mt-2 tracking-wide">Operational Valuation</p>
                                     </div>
                                     <div className="p-5 rounded-2xl bg-purple-500 text-white shadow-lg"><Icons.Dollar /></div>
                                 </div>
-                                <div className="space-y-5 border-t border-slate-500/10 pt-8">
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
                                     {[
-                                        { l: 'FLOWER REV', v: revenueMode === 'rpl' ? `$${stats.flowerRpl}` : `$${stats.revA}`, c: 'text-emerald-600', bg: 'bg-emerald-500/5' },
-                                        { l: 'SMALLS REV', v: revenueMode === 'rpl' ? `$${stats.smallsRpl}` : `$${stats.revB}`, c: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                        { l: 'TRIM REV', v: revenueMode === 'rpl' ? `$${stats.trimRpl}` : `$${stats.revC}`, c: 'text-amber-600', bg: 'bg-amber-500/5' }
+                                        { l: 'FLOWER REV', v: revenueMode === 'rpl' ? `$${stats.flowerRpl}` : `$${stats.revA}`, c: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                                        { l: 'SMALLS REV', v: revenueMode === 'rpl' ? `$${stats.smallsRpl}` : `$${stats.revB}`, c: 'text-blue-500', bg: 'bg-blue-50/10' },
+                                        { l: 'TRIM REV', v: revenueMode === 'rpl' ? `$${stats.trimRpl}` : `$${stats.revC}`, c: 'text-amber-600', bg: 'bg-amber-500/10' }
                                     ].map(b => (
-                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-500/5 shadow-sm`}>
-                                            <p className="text-[11px] font-black text-slate-500 tracking-tighter uppercase">{b.l}</p>
-                                            <p className={`text-[15px] font-black ${b.c}`}>{b.v}</p>
+                                        <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}>
+                                            <p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[16px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -516,16 +528,16 @@
                         </div>
 
                         {/* CHARTS */}
-                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
-                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Batch Strategy Map</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency vs Flower Grade (Hover dots for Cycle/Room context)</p></div>
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Batch Strategy Map</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency vs Flower Grade (Hover dots for Contextual Batch Data)</p></div>
                             </div>
                             <div className="h-[500px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ScatterChart margin={{ top: 20, right: 40, bottom: 20, left: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} />
-                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} domain={[65, 95]} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.5} />
+                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
+                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} domain={[65, 95]} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
                                         <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                                             if (active && payload && payload.length) {
                                                 const d = payload[0].payload;
@@ -533,8 +545,8 @@
                                                     <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl border border-slate-800 text-left min-w-[200px]">
                                                         <p className="text-[13px] font-black text-emerald-400 uppercase tracking-widest mb-2">{d.name}</p>
                                                         <div className="space-y-1.5">
-                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Cycle:</span> <span className="font-bold">{d.cycle}</span></p>
-                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Room:</span> <span className="font-bold">{d.room}</span></p>
+                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Cycle:</span> <span className="font-bold text-slate-200">{d.cycle}</span></p>
+                                                            <p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-500">Room:</span> <span className="font-bold text-slate-200">{d.room}</span></p>
                                                             <p className="text-[12px] flex justify-between gap-6 border-t border-white/10 pt-2 mt-2 font-black"><span className="text-slate-400">EFFICIENCY:</span> <span className="text-blue-400">{d.x} GPL</span></p>
                                                             <p className="text-[12px] flex justify-between gap-6 font-black"><span className="text-slate-400">QUALITY:</span> <span className="text-amber-400">{d.y}%</span></p>
                                                         </div>
@@ -553,17 +565,17 @@
                             </div>
                         </div>
 
-                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm text-left performance-card overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left overflow-hidden">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
                                 <div className="flex items-center gap-5">
                                     <div className="bg-emerald-50/10 p-4 rounded-2xl text-emerald-500"><Icons.Award /></div>
-                                    <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Premium Market Mix</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Variance vs Goal ({targetQuality}%)</p></div>
+                                    <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Premium Market Mix</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Variance vs Goal ({targetQuality}%)</p></div>
                                 </div>
-                                <div className="flex items-center gap-4 bg-slate-50/10 p-2 rounded-2xl border border-slate-500/10 shadow-sm">
-                                    <button onClick={() => setShowRoomDetails(!showRoomDetails)} className={`p-3 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-950 text-white shadow-lg' : 'bg-white text-slate-500'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
-                                    <div className="h-6 w-px bg-slate-500/20 mx-1"></div>
+                                <div className="flex items-center gap-4 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                    <button onClick={() => setShowRoomDetails(!showRoomDetails)} className={`p-3 rounded-xl transition-all ${showRoomDetails ? 'bg-slate-950 text-white shadow-lg' : 'bg-slate-800 text-slate-500'}`}>{showRoomDetails ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+                                    <div className="h-6 w-px bg-slate-700 mx-1"></div>
                                     {['ratio', 'volume', 'gpl'].map(m => (
-                                        <button key={m} onClick={() => setMixChartView(m)} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${mixChartView === m ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-500' : 'text-slate-500'}`}>{m}</button>
+                                        <button key={m} onClick={() => setMixChartView(m)} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${mixChartView === m ? 'bg-slate-600 shadow-md text-emerald-500' : 'text-slate-500'}`}>{m}</button>
                                     ))}
                                 </div>
                             </div>
@@ -573,9 +585,9 @@
                                         <defs>
                                             <linearGradient id="colorMix" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="cycle" tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{fontSize: 13, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569'}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.5} />
+                                        <XAxis dataKey="cycle" tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
                                         <Tooltip />
                                         <Legend verticalAlign="top" height={40}/>
                                         <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" />
@@ -588,21 +600,21 @@
                             </div>
                         </div>
 
-                        <div className={`p-11 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
-                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Cultivar selection</p></div>
-                                <div className="flex bg-slate-50/10 p-1.5 rounded-2xl border border-slate-500/10 shadow-sm">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Genetic Benchmarking</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Cultivar selection</p></div>
+                                <div className="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700 shadow-sm">
                                     {['yield', 'gpl'].map(m => (
-                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[12px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-white dark:bg-slate-700 shadow-md text-emerald-600' : 'text-slate-500 hover:text-slate-600'}`}>{m}</button>
+                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[12px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-slate-700 shadow-md text-emerald-500' : 'text-slate-500 hover:text-slate-400'}`}>{m}</button>
                                     ))}
                                 </div>
                             </div>
                             <div className="h-[450px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                                        <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 900, fill: isDarkMode ? '#94a3b8' : '#475569' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
-                                        <YAxis tick={{ fontSize: 13, fill: isDarkMode ? '#94a3b8' : '#475569', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.3} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 900, fill: '#cbd5e1' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
+                                        <YAxis tick={{ fontSize: 13, fill: '#cbd5e1', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
                                         <Tooltip />
                                         <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={40}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
                                     </BarChart>
@@ -611,11 +623,11 @@
                         </div>
 
                         {/* LEADERBOARD */}
-                        <div className={`p-14 rounded-[3.5rem] border border-slate-500/10 shadow-sm relative overflow-hidden performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                        <div className="p-14 rounded-[3.5rem] performance-card text-left relative overflow-hidden">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
-                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Room Rankings by Operational Performance Score</p></div>
-                                <div className="flex items-center gap-2 bg-slate-50/10 p-2 rounded-2xl border border-slate-500/10 shadow-sm">
-                                    <span className="text-[12px] font-black text-slate-500 uppercase px-4 tracking-widest">Sort Strategy:</span>
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Facility Power Leaderboard</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Room Rankings by Operational Performance Score</p></div>
+                                <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                    <span className="text-[12px] font-black text-slate-400 uppercase px-4 tracking-widest">Sort Strategy:</span>
                                     <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>GPL (Weight)</button>
                                     <button onClick={() => setLeaderboardSort('mix')} className={`px-6 py-2.5 text-[13px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>Mix (Grade)</button>
                                 </div>
@@ -623,19 +635,19 @@
                             <div className="h-[500px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 120 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#334155" opacity={0.3} />
                                         <XAxis type="number" domain={[0, 200]} hide />
-                                        <YAxis dataKey="name" type="category" tick={{fontSize: 17, fontStyle: 'italic', fontWeight: 900, fill: isDarkMode ? '#e2e8f0' : '#1e293b'}} width={100} axisLine={false} tickLine={false} />
-                                        <Tooltip cursor={{fill: '#f8fafc'}} content={({active, payload}) => {
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 17, fontStyle: 'italic', fontWeight: 900, fill: '#f1f5f9'}} width={100} axisLine={false} tickLine={false} />
+                                        <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} content={({active, payload}) => {
                                             if (active && payload && payload.length) {
                                                 const d = payload[0].payload;
                                                 return (
-                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[240px]">
-                                                        <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 text-left leading-none">
+                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[240px] text-left">
+                                                        <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 leading-none">
                                                             <Icons.Crown />
                                                             <p className="text-sm font-black uppercase tracking-widest">{d.name}</p>
                                                         </div>
-                                                        <div className="space-y-2 text-left leading-none mt-4">
+                                                        <div className="space-y-2 leading-none mt-4">
                                                             <p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
                                                             <p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
                                                         </div>
@@ -656,30 +668,30 @@
                         </div>
 
                         {/* MATRIX */}
-                        <div className={`rounded-[3.5rem] border border-slate-500/10 shadow-sm overflow-hidden mb-20 performance-card text-left ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                            <div className="px-14 py-16 border-b border-slate-500/10 bg-slate-500/5 flex flex-col md:flex-row justify-between items-center gap-10 leading-none">
-                                <div><h2 className="text-[36px] font-black italic uppercase tracking-tighter leading-none text-left">Facility Yield Matrix</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-4 italic leading-none text-left">Efficiency Breakdown Per Room (Dual KG/LB Scale)</p></div>
-                                <div className="flex items-center gap-5 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-500/10 shadow-sm">
-                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Efficiency (GPL)</button>
-                                    <button onClick={() => setMatrixMetric('yield')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>Volume (Kg/Lb)</button>
+                        <div className="rounded-[3.5rem] performance-card text-left overflow-hidden mb-20">
+                            <div className="px-14 py-16 border-b border-slate-800 bg-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-10 leading-none">
+                                <div><h2 className="text-[36px] font-black italic uppercase tracking-tighter leading-none text-slate-100 text-left">Facility Yield Matrix</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-4 italic leading-none text-left">Efficiency Breakdown Per Room (Dual KG/LB Scale)</p></div>
+                                <div className="flex items-center gap-5 bg-slate-900 p-3 rounded-2xl border border-slate-700 shadow-sm">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-700'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-9 py-3 text-[14px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-700'}`}>Volume (Kg/Lb)</button>
                                 </div>
                             </div>
                             <div className="overflow-x-auto custom-scrollbar">
-                                <table className="w-full border-collapse">
-                                    <thead><tr className="text-[15px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10"><th className="px-14 py-11 border-b border-slate-500/10 text-left">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-11 py-11 text-center border-b border-slate-500/10">{r}</th>)}</tr></thead>
-                                    <tbody className="divide-y divide-slate-500/10">
+                                <table className="w-full border-collapse text-left">
+                                    <thead><tr className="text-[15px] font-black tracking-widest text-slate-500 bg-slate-800/20"><th className="px-14 py-11 border-b border-slate-800 uppercase">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-11 py-11 text-center border-b border-slate-800 uppercase">{r}</th>)}</tr></thead>
+                                    <tbody className="divide-y divide-slate-800">
                                         {strainRoomMatrix.map((row, i) => (
-                                            <tr key={i} className="hover:bg-slate-500/5 group transition-colors">
-                                                <td className="px-14 py-10 font-black text-slate-700 dark:text-slate-200 italic uppercase border-r border-slate-500/5 text-[17px] tracking-tight text-left">{row.strain}</td>
+                                            <tr key={i} className="hover:bg-slate-800/30 group transition-colors">
+                                                <td className="px-14 py-10 font-black text-slate-200 italic uppercase border-r border-slate-800 text-[17px] tracking-tight">{row.strain}</td>
                                                 {roomOptions.filter(r => r !== 'All').map(r => {
                                                     const val = row[r];
                                                     const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
                                                     const lbs = val !== '-' && matrixMetric === 'yield' ? `(${ (val * KG_TO_LB).toFixed(1) }lb)` : '';
                                                     return (
                                                         <td key={r} className="px-11 py-10 text-center">
-                                                            <div className={`inline-block px-7 py-4 rounded-3xl font-mono font-bold text-[17px] ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-500/10 text-slate-500 opacity-60'}`}>
+                                                            <div className={`inline-block px-7 py-4 rounded-3xl font-mono font-bold text-[17px] ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-800 text-slate-500 opacity-60'}`}>
                                                                 <p>{val}{matrixMetric === 'yield' ? 'kg' : ''}</p>
-                                                                {lbs && <p className="text-[12px] opacity-70 mt-1.5">{lbs}</p>}
+                                                                {lbs && <p className="text-[12px] opacity-70 mt-1.5 font-bold">{lbs}</p>}
                                                             </div>
                                                         </td>
                                                     );
@@ -694,7 +706,7 @@
 
                     {/* MODALS */}
                     {showEntryModal && (
-                        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
                             <div className="bg-white rounded-[3.5rem] w-full max-w-5xl h-[92vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
                                 <div className="absolute top-8 right-8 z-10">
                                     <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm"><Icons.X /></button>
