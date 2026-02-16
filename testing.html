@@ -565,3 +565,144 @@
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                                         <XAxis dataKey="cycle" tick={{fontSize: 10, fontWeight: 900}} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{fontSize: 10, fontWeight: 900}} domain={mixChartView === 'ratio' ? [60, 90] : [0, 'auto']} axisLine={false} tickLine={false} unit={mixChartView === 'ratio' ? "%" : mixChartView === 'volume' ? "kg" : ""} />
+                                        <Tooltip />
+                                        <Legend verticalAlign="top" height={40}/>
+                                        <Area type="monotone" dataKey="facilityValue" name="FACILITY AVG" stroke="#059669" strokeWidth={5} fillOpacity={1} fill="url(#colorMix)" animationDuration={1000} />
+                                        {mixChartView === 'ratio' && <ReferenceLine y={70} stroke="#f43f5e" strokeWidth={2} strokeDasharray="3 3" label={{ position: 'right', value: '70% GOAL', fill: '#f43f5e', fontSize: 10, fontWeight: 900 }} />}
+                                        {showRoomDetails && roomOptions.filter(r => r !== 'All').map((room, i) => (
+                                            <Line key={room} type="monotone" dataKey={room} name={room} stroke={COLORS[i % COLORS.length]} strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} opacity={0.8} />
+                                        ))}
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* ROW 3: GENETIC BENCHMARKING */}
+                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-left performance-card">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Performance KPIs per cultivar selection</p></div>
+                                <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                                    {['yield', 'gpl'].map(m => (
+                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="h-[450px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
+                                        <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={40}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* ROW 4: LEADERBOARD */}
+                        <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mt-2 italic text-center">Room Rankings by Operational Performance</p></div>
+                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200 shadow-sm">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase px-4 tracking-widest">Sort Strategy:</span>
+                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL (Weight)</button>
+                                    <button onClick={() => setLeaderboardSort('mix')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'mix' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>Mix (Grade)</button>
+                                </div>
+                            </div>
+                            <div className="h-[500px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 120 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
+                                        <XAxis type="number" domain={[0, 200]} hide />
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 15, fontStyle: 'italic', fontWeight: 900, fill: '#1e293b'}} width={100} axisLine={false} tickLine={false} />
+                                        <Tooltip cursor={{fill: '#f8fafc'}} content={({active, payload}) => {
+                                            if (active && payload && payload.length) {
+                                                const d = payload[0].payload;
+                                                return (
+                                                    <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[220px]">
+                                                        <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 text-left leading-none">
+                                                            <Icons.Crown />
+                                                            <p className="text-sm font-black uppercase tracking-widest">{d.name}</p>
+                                                        </div>
+                                                        <div className="space-y-2 text-left leading-none mt-4">
+                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p>
+                                                            <p className="text-[11px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Quality:</span> <span className="font-black text-emerald-400">{d.mix}%</span></p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}/>
+                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 11, fontWeight: 900 }} />
+                                        <Bar dataKey="sortVal" name="Score" radius={[0, 20, 20, 0]} barSize={50}>
+                                            {roomBenchmark.map((entry, i) => (
+                                                <Cell key={i} fill={ i === 0 ? '#10b981' : entry.sortVal > (leaderboardSort === 'mix' ? 75 : 90) ? '#3b82f6' : entry.sortVal > (leaderboardSort === 'mix' ? 50 : 60) ? '#f59e0b' : '#f43f5e' } />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* ROW 5: FACILITY YIELD MATRIX */}
+                        <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card text-left">
+                            <div className="px-12 py-16 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-8 leading-none">
+                                <div><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Facility Yield Matrix</h2><p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Room (Kg & Lb Integration)</p></div>
+                                <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                                    <button onClick={() => setMatrixMetric('gpl')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'gpl' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Efficiency (GPL)</button>
+                                    <button onClick={() => setMatrixMetric('yield')} className={`px-8 py-3 text-[11px] font-black uppercase rounded-xl transition-all ${matrixMetric === 'yield' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Volume (Kg/Lb)</button>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead><tr className="text-[12px] uppercase font-black tracking-widest text-slate-400 bg-slate-50/50"><th className="px-12 py-10 border-b border-slate-100 text-slate-500">Genetic Archetype</th>{roomOptions.filter(r => r !== 'All').map(r => <th key={r} className="px-10 py-10 text-center border-b border-slate-100 text-slate-500">{r}</th>)}</tr></thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {strainRoomMatrix.map((row, i) => (
+                                            <tr key={i} className="hover:bg-slate-50 group transition-colors">
+                                                <td className="px-12 py-9 font-black text-slate-800 italic uppercase border-r border-slate-50/50 text-sm tracking-tight">{row.strain}</td>
+                                                {roomOptions.filter(r => r !== 'All').map(r => {
+                                                    const val = row[r];
+                                                    const isMax = val !== '-' && val === row.maxVal && row.maxVal > 0;
+                                                    const lbs = val !== '-' && matrixMetric === 'yield' ? `(${ (val * KG_TO_LB).toFixed(1) }lb)` : '';
+                                                    return (
+                                                        <td key={r} className="px-10 py-9 text-center">
+                                                            <div className={`inline-block px-4 py-3 rounded-2xl font-mono font-bold text-sm ${isMax ? 'bg-emerald-600 text-white shadow-xl scale-110' : 'bg-slate-50 text-slate-400 opacity-60'}`}>
+                                                                <p>{val}{matrixMetric === 'yield' ? 'kg' : ''}</p>
+                                                                {lbs && <p className="text-[9px] opacity-70 mt-1">{lbs}</p>}
+                                                            </div>
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* MODAL: DATA ENTRY */}
+                    {showEntryModal && (
+                        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[3.5rem] w-full max-w-5xl h-[92vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                                <div className="absolute top-8 right-8 z-10">
+                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm">
+                                        <Icons.X />
+                                    </button>
+                                </div>
+                                <div className="h-full w-full bg-slate-50">
+                                    <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Production Entry Form">Loading form...</iframe>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
