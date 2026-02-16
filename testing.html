@@ -53,7 +53,7 @@
         } = Recharts;
 
         const Icons = {
-            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Globe: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
             Zap: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
             Scale: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
             Award: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
@@ -189,13 +189,27 @@
                 });
             }, [data, selectedCycle, selectedRoom, selectedStrain]);
 
+            const facilityAverages = useMemo(() => {
+                const a = data.reduce((acc, c) => acc + c["Flower (A)"], 0);
+                const net = data.reduce((acc, c) => acc + c["Total Yield (G)"], 0);
+                const lights = data.reduce((acc, c) => acc + c["Lights"], 0);
+                return {
+                    gpl: lights > 0 ? (net / lights).toFixed(1) : 0,
+                    mix: net > 0 ? ((a / net) * 100).toFixed(1) : 0
+                };
+            }, [data]);
+
             const stats = useMemo(() => {
                 const a = filteredData.reduce((acc, c) => acc + (c["Flower (A)"] || 0), 0);
                 const b = filteredData.reduce((acc, c) => acc + (c["Smalls (B)"] || 0), 0);
                 const c = filteredData.reduce((acc, c) => acc + (c["Trim (C)"] || 0), 0);
                 const netG = a + b + c;
-                const lights = filteredData.reduce((acc, d) => acc + d["Lights"], 0);
-                const rev = (a * priceA) + (b * priceB) + (c * priceC);
+                const lights = filteredData.reduce((acc, d) => acc + d["Lights"], 0) || 1;
+                
+                const revA = a * priceA;
+                const revB = b * priceB;
+                const revC = c * priceC;
+                const totalRev = revA + revB + revC;
                 
                 const fmt = (v) => (v / 1000).toFixed(1);
                 const lb = (v) => ((v / 1000) * KG_TO_LB).toFixed(1);
@@ -205,19 +219,42 @@
                     flowerA: fmt(a), flowerALb: lb(a),
                     smallsB: fmt(b), smallsBLb: lb(b),
                     trimC: fmt(c), trimCLb: lb(c),
-                    gpl: lights > 0 ? (netG / lights).toFixed(1) : 0,
-                    rpl: lights > 0 ? (rev / lights).toFixed(2) : 0,
+                    
+                    gpl: (netG / lights).toFixed(1),
+                    flowerGpl: (a / lights).toFixed(1),
+                    smallsGpl: (b / lights).toFixed(1),
+                    trimGpl: (c / lights).toFixed(1),
+
+                    rpl: (totalRev / lights).toFixed(2),
+                    flowerRpl: (revA / lights).toFixed(2),
+                    smallsRpl: (revB / lights).toFixed(2),
+                    trimRpl: (revC / lights).toFixed(2),
+
                     quality: netG > 0 ? ((a / netG) * 100).toFixed(1) : "0",
-                    revenue: Math.round(rev).toLocaleString()
+                    revenue: Math.round(totalRev).toLocaleString()
                 };
             }, [filteredData, priceA, priceB, priceC]);
+
+            const strainBenchmark = useMemo(() => {
+                const map = {};
+                filteredData.forEach(d => {
+                    const n = d["Strain Name"];
+                    if (!map[n]) map[n] = { name: n, gplSum: 0, yieldSum: 0, count: 0 };
+                    map[n].gplSum += d["Grams per Light"];
+                    map[n].yieldSum += d["Total Yield (G)"];
+                    map[n].count += 1;
+                });
+                return Object.values(map).map(m => ({
+                    name: String(m.name),
+                    value: matrixMetric === 'yield' ? Number((m.yieldSum / 1000).toFixed(2)) : Number((m.gplSum / m.count).toFixed(2))
+                })).sort((a, b) => b.value - a.value);
+            }, [filteredData, matrixMetric]);
 
             const cycleTrendData = useMemo(() => {
                 return cycleOptions.filter(c => c !== 'All').map(c => {
                     const rows = data.filter(d => d["Cycle ID"] === c);
                     const netTotal = rows.reduce((acc, r) => acc + r["Total Yield (G)"], 0);
                     const premiumFlower = rows.reduce((acc, r) => acc + r["Flower (A)"], 0);
-                    const lightsTotal = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
                     const activeRooms = [...new Set(rows.map(r => r["Room ID"]))].filter(id => id !== "N/A");
 
                     const res = { cycle: c };
@@ -225,12 +262,12 @@
                     if (mixChartView === 'ratio') {
                         res.facilityValue = netTotal > 0 ? Number(((premiumFlower / netTotal) * 100).toFixed(1)) : 0;
                     } else if (mixChartView === 'volume') {
-                        // User Request: Average of the rooms rather than sum
                         res.facilityValue = activeRooms.length > 0 
                             ? Number(((premiumFlower / 1000) / activeRooms.length).toFixed(1)) 
                             : 0;
                     } else {
-                        res.facilityValue = Number((netTotal / lightsTotal).toFixed(1));
+                        const totalLights = rows.reduce((acc, r) => acc + r["Lights"], 0) || 1;
+                        res.facilityValue = Number((netTotal / totalLights).toFixed(1));
                     }
 
                     roomOptions.filter(r => r !== 'All').forEach(room => {
@@ -297,6 +334,7 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-32">
+                    {/* STICKY HEADER */}
                     <div className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-sm">
                         <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-left">
                             <div className="flex items-center gap-4 pr-6 border-r border-slate-100 shrink-0">
@@ -311,7 +349,7 @@
                             </div>
 
                             <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Production</button>
+                                <button onClick={() => setDataSource('live')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Live Prod</button>
                                 <button onClick={() => setDataSource('sample')} className={`px-4 py-2 text-[10px] font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-white shadow-lg text-emerald-600' : 'text-slate-400'}`}>Sample Model</button>
                             </div>
 
@@ -320,11 +358,11 @@
                                 <div className="flex items-center gap-8 bg-slate-100/50 px-10 py-2 rounded-2xl border border-slate-200 shadow-inner min-w-[550px]">
                                     <Icons.Coins />
                                     {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls (S)', v: priceB, s: setPriceB}, {l: 'Trim (T)', v: priceC, s: setPriceC}].map(p => (
-                                        <div key={p.l} className="flex items-center gap-2 flex-1">
+                                        <div key={p.l} className="flex flex-col gap-1 flex-1">
                                             <span className="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">{p.l}:</span>
                                             <div className="flex items-center">
                                                 <span className="text-slate-400 text-sm mr-1">$</span>
-                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-3 py-1 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
+                                                <input type="number" step="0.01" value={p.v} onChange={e => p.s(parseFloat(e.target.value))} className="bg-white border border-slate-100 rounded-lg px-2 py-1 text-sm font-black w-full focus:border-emerald-500 shadow-sm outline-none" />
                                             </div>
                                         </div>
                                     ))}
@@ -347,6 +385,7 @@
                     <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center flex flex-col gap-10">
                         {/* KPI GRID */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                            {/* NET USABLE HARVEST CARD */}
                             <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group col-span-1 lg:col-span-1">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
@@ -373,20 +412,68 @@
                                 </div>
                             </div>
 
-                            {[
-                                { label: "Efficiency (GPL)", val: stats.gpl, unit: "GPL", sub: "Weight Density", icon: Icons.Zap, color: "bg-blue-500" },
-                                { label: "Flower Yield Ratio", val: stats.quality, unit: "%", sub: "Goal: 75% Mix", icon: Icons.Award, color: "bg-amber-500" },
-                                { label: "Revenue Velocity", val: `$${stats.rpl}`, unit: "", sub: "Live Revenue Per Light", icon: Icons.Dollar, color: "bg-purple-500" }
-                            ].map((kpi, i) => (
-                                <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center justify-between group performance-card">
-                                    <div className="text-left">
-                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">{kpi.label}</p>
-                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{kpi.val}<span className="text-sm font-normal text-slate-300 ml-1 italic">{kpi.unit}</span></h3>
-                                        <p className="text-[11px] text-slate-300 font-bold mt-2 uppercase tracking-widest">{kpi.sub}</p>
+                            {/* EFFICIENCY CARD (GPL BREAKDOWN) */}
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p>
+                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.gpl}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">GPL</span></h3>
+                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">Industrial Density</p>
                                     </div>
-                                    <div className={`p-5 rounded-2xl ${kpi.color} text-white shadow-lg`}><kpi.icon /></div>
+                                    <div className="p-4 rounded-2xl bg-blue-500 text-white shadow-lg"><Icons.Zap /></div>
                                 </div>
-                            ))}
+                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                    {[
+                                        { l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
+                                        { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                    ].map(b => (
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[13px] font-black ${b.c}`}>{b.v}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* QUALITY RATIO CARD */}
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card group flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower Yield Ratio</p>
+                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">{stats.quality}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">%</span></h3>
+                                        <p className="text-[11px] text-slate-300 font-bold mt-1 uppercase">Goal: 75% Mix</p>
+                                    </div>
+                                    <div className="p-5 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
+                                </div>
+                                <div className="p-5 bg-amber-50/50 rounded-3xl border border-amber-100 mt-6">
+                                    <p className="text-[9px] font-bold text-amber-800 uppercase tracking-widest leading-relaxed italic text-center">Measures percentage of premium Flower (A) against total harvest volume.</p>
+                                </div>
+                            </div>
+
+                            {/* REVENUE VELOCITY CARD (RPL BREAKDOWN) */}
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 performance-card overflow-hidden group">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 group-hover:text-purple-500">Revenue Velocity</p>
+                                        <h3 className="text-4xl font-black tracking-tighter italic leading-none">${stats.rpl}<span className="text-sm font-normal text-slate-300 ml-1 italic text-[14px]">/Light</span></h3>
+                                        <p className="text-[11px] font-bold text-slate-300 mt-1 uppercase">Value Per Socket</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-purple-500 text-white shadow-lg"><Icons.Dollar /></div>
+                                </div>
+                                <div className="space-y-4 border-t border-slate-50 pt-6">
+                                    {[
+                                        { l: 'FLOWER RPL', v: stats.flowerRpl, c: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                        { l: 'SMALLS RPL', v: stats.smallsRpl, c: 'text-blue-600', bg: 'bg-blue-50/50' },
+                                        { l: 'TRIM RPL', v: stats.trimRpl, c: 'text-amber-600', bg: 'bg-amber-50/50' }
+                                    ].map(b => (
+                                        <div key={b.l} className={`flex items-center justify-between p-3 rounded-2xl ${b.bg} border border-white`}>
+                                            <p className="text-[9px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p>
+                                            <p className={`text-[13px] font-black ${b.c}`}>${b.v}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* MODULE 1: BATCH STRATEGY MAP (INDIVIDUAL ROW) */}
@@ -448,10 +535,33 @@
                             </div>
                         </div>
 
-                        {/* ROW 3: LEADERBOARD */}
+                        {/* ROW 3: GENETIC BENCHMARKING */}
+                        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden text-left performance-card">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 leading-none">
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Genetic Benchmarking</h2><p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2 italic">Performance KPIs per cultivar selection</p></div>
+                                <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-200 shadow-sm">
+                                    {['yield', 'gpl'].map(m => (
+                                        <button key={m} onClick={() => setMatrixMetric(m)} className={`px-6 py-3 text-[10px] font-black uppercase rounded-xl transition-all ${matrixMetric === m ? 'bg-white shadow-md text-emerald-600' : 'text-slate-400'}`}>{m}</button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="h-[450px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={strainBenchmark} margin={{ bottom: 60 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" />
+                                        <YAxis tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 900 }} domain={matrixMetric === 'gpl' ? [0, 200] : [0, 'auto']} axisLine={false} tickLine={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={40}>{strainBenchmark.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* ROW 4: LEADERBOARD */}
                         <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden performance-card text-left">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
-                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mt-2 italic">Room Rankings by Operational Performance</p></div>
+                                <div><h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Facility Power Leaderboard</h2><p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mt-2 italic text-center">Room Rankings by Operational Performance</p></div>
                                 <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200 shadow-sm">
                                     <span className="text-[10px] font-black text-slate-400 uppercase px-4 tracking-widest">Sort Strategy:</span>
                                     <button onClick={() => setLeaderboardSort('gpl')} className={`px-6 py-2.5 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>GPL (Weight)</button>
@@ -493,7 +603,7 @@
                             </div>
                         </div>
 
-                        {/* ROW 4: FACILITY YIELD MATRIX */}
+                        {/* ROW 5: FACILITY YIELD MATRIX */}
                         <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden mb-20 performance-card text-left">
                             <div className="px-12 py-16 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-8 leading-none">
                                 <div><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Facility Yield Matrix</h2><p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-3 italic leading-none">Efficiency Breakdown Per Room (Kg & Lb Integration)</p></div>
