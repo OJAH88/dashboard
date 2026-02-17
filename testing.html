@@ -104,6 +104,7 @@
             Crown: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
             List: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>,
             Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+            Database: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
         };
 
         const MultiSelect = ({ label, options, selected, onChange }) => {
@@ -162,8 +163,33 @@
 
             // --- COMPARATOR STATE ---
             const [compMode, setCompMode] = useState('cycle'); // 'cycle', 'room', 'batch'
-            const [compA, setCompA] = useState({ cycle: '', room: '' });
-            const [compB, setCompB] = useState({ cycle: '', room: '' });
+            const [compSelections, setCompSelections] = useState([
+                { id: 1, cycle: '', room: '' },
+                { id: 2, cycle: '', room: '' }
+            ]);
+
+            const addCompSelection = () => {
+                if (compSelections.length < 5) {
+                    setCompSelections([...compSelections, { id: Date.now(), cycle: '', room: '' }]);
+                }
+            };
+
+            const removeCompSelection = (idToRemove) => {
+                if (compSelections.length > 2) {
+                    setCompSelections(compSelections.filter(s => s.id !== idToRemove));
+                }
+            };
+
+            const updateCompSelection = (id, field, value) => {
+                setCompSelections(compSelections.map(s => s.id === id ? { ...s, [field]: value } : s));
+            };
+
+            const resetDefaults = () => {
+                setPriceA(3.97);
+                setPriceB(2.20);
+                setPriceC(1.32);
+                setTargetQuality(70);
+            };
 
             const parseCSV = (text) => {
                 const lines = text.split(/\r?\n/).filter(line => line.trim());
@@ -429,6 +455,7 @@
                         id: r.id,
                         strain: r.strain,
                         yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        flowerLb: ((r.premiumG / 1000) * KG_TO_LB).toFixed(1), // Added Flower Yield
                         gpl: r.gpl.toFixed(1),
                         quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0
                     })).sort((a,b) => {
@@ -440,6 +467,7 @@
                     const formattedStrains = Object.values(g.strains).map(s => ({
                         name: s.name,
                         yieldLb: ((s.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        flowerLb: ((s.premiumG / 1000) * KG_TO_LB).toFixed(1), // Added Flower Yield
                         gpl: s.lights > 0 ? (s.yieldG / s.lights).toFixed(1) : 0,
                         quality: s.yieldG > 0 ? ((s.premiumG / s.yieldG) * 100).toFixed(1) : 0
                     })).sort((a,b) => b.gpl - a.gpl);
@@ -447,6 +475,7 @@
                     const formattedRoomsAgg = Object.values(g.roomsAgg).map(r => ({
                         name: r.name,
                         yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        flowerLb: ((r.premiumG / 1000) * KG_TO_LB).toFixed(1), // Added Flower Yield
                         gpl: r.lights > 0 ? (r.yieldG / r.lights).toFixed(1) : 0,
                         quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0
                     })).sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
@@ -502,8 +531,13 @@
                 };
             };
 
-            const statsA = useMemo(() => getCompStats(compA), [compA, compMode, data, priceA, priceB, priceC]);
-            const statsB = useMemo(() => getCompStats(compB), [compB, compMode, data, priceA, priceB, priceC]);
+            // Calculate stats for all selections
+            const allCompStats = useMemo(() => {
+                return compSelections.map(s => ({
+                    id: s.id,
+                    stats: getCompStats(s)
+                }));
+            }, [compSelections, compMode, data, priceA, priceB, priceC]);
 
             const renderMetricDiff = (valA, valB, suffix = '', inverse = false) => {
                 if (!valA || !valB) return null;
@@ -528,7 +562,7 @@
                             
                             {/* Left: Sync & Source */}
                             <div className="flex items-center gap-4 shrink-0">
-                                <div className="flex items-center gap-3 pr-3 border-r border-slate-800 shrink-0">
+                                <div className="flex items-center gap-3 pr-3 shrink-0">
                                     <div className="bg-emerald-600 p-1.5 rounded-xl text-white shadow-md"><Icons.Globe /></div>
                                     <div className="flex flex-col leading-none">
                                         <h1 className="text-[12px] font-black italic uppercase tracking-tighter">Cultivation Intel</h1>
@@ -537,10 +571,6 @@
                                             <p className="text-[10px] font-black uppercase text-slate-400">SYNC: {lastSync || 'Pending'}</p>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-                                    <button onClick={() => setDataSource('live')} className={`px-2 py-1 text-[9px] font-black uppercase rounded-md transition-all ${dataSource === 'live' ? 'bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-500 hover:text-slate-300'}`}>Live</button>
-                                    <button onClick={() => setDataSource('sample')} className={`px-2 py-1 text-[9px] font-black uppercase rounded-md transition-all ${dataSource === 'sample' ? 'bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-400 hover:text-slate-300'}`}>Demo</button>
                                 </div>
                             </div>
 
@@ -737,6 +767,7 @@
                                                                 <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
                                                                     <th className="pb-3 pl-2">Strain</th>
                                                                     <th className="pb-3 text-right">Total Yield</th>
+                                                                    <th className="pb-3 text-right">Flower Yield</th>
                                                                     <th className="pb-3 text-right">Avg Eff</th>
                                                                     <th className="pb-3 text-right pr-2">Avg Quality</th>
                                                                 </tr>
@@ -746,6 +777,7 @@
                                                                     <tr key={idx} className="border-b border-slate-800/30 last:border-0 hover:bg-slate-800/10">
                                                                         <td className="py-2 pl-2 text-emerald-400">{s.name}</td>
                                                                         <td className="py-2 text-right">{s.yieldLb} lb</td>
+                                                                        <td className="py-2 text-right text-emerald-500/80">{s.flowerLb} lb</td>
                                                                         <td className="py-2 text-right text-blue-400">{s.gpl} GPL</td>
                                                                         <td className="py-2 text-right pr-2 text-amber-500">{s.quality}%</td>
                                                                     </tr>
@@ -764,6 +796,7 @@
                                                                 <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
                                                                     <th className="pb-3 pl-2">Room</th>
                                                                     <th className="pb-3 text-right">Total Yield</th>
+                                                                    <th className="pb-3 text-right">Flower Yield</th>
                                                                     <th className="pb-3 text-right">Avg Eff</th>
                                                                     <th className="pb-3 text-right pr-2">Avg Quality</th>
                                                                 </tr>
@@ -773,6 +806,7 @@
                                                                     <tr key={idx} className="border-b border-slate-800/30 last:border-0 hover:bg-slate-800/10">
                                                                         <td className="py-2 pl-2 text-white">{r.name}</td>
                                                                         <td className="py-2 text-right">{r.yieldLb} lb</td>
+                                                                        <td className="py-2 text-right text-emerald-500/80">{r.flowerLb} lb</td>
                                                                         <td className="py-2 text-right text-blue-400">{r.gpl} GPL</td>
                                                                         <td className="py-2 text-right pr-2 text-amber-500">{r.quality}%</td>
                                                                     </tr>
@@ -792,6 +826,7 @@
                                                                     <th className="pb-4 pl-4">Room</th>
                                                                     <th className="pb-4">Strain</th>
                                                                     <th className="pb-4 text-right">Yield (lb)</th>
+                                                                    <th className="pb-4 text-right">Flower (lb)</th>
                                                                     <th className="pb-4 text-right">Efficiency</th>
                                                                     <th className="pb-4 text-right pr-4">Flower Ratio</th>
                                                                 </tr>
@@ -802,6 +837,7 @@
                                                                         <td className="py-4 pl-4 text-white">{room.id}</td>
                                                                         <td className="py-4 text-emerald-400">{room.strain}</td>
                                                                         <td className="py-4 text-right">{room.yieldLb}</td>
+                                                                        <td className="py-4 text-right text-emerald-500/80">{room.flowerLb}</td>
                                                                         <td className="py-4 text-right text-blue-400">{room.gpl} GPL</td>
                                                                         <td className="py-4 text-right pr-4 text-amber-500">{room.quality}%</td>
                                                                     </tr>
@@ -824,151 +860,128 @@
                                     <div className="bg-purple-500/10 p-4 rounded-2xl text-purple-400"><Icons.Scale /></div>
                                     <div>
                                         <h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Performance Face-Off</h2>
-                                        <p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Analyze Performance Deltas</p>
+                                        <p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Analyze Performance Deltas vs Baseline</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
-                                    <button onClick={() => { setCompMode('cycle'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'cycle' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Cycle</button>
-                                    <button onClick={() => { setCompMode('room'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'room' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Room</button>
-                                    <button onClick={() => { setCompMode('batch'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'batch' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Batch</button>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                        <button onClick={() => { setCompMode('cycle'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'cycle' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Cycle</button>
+                                        <button onClick={() => { setCompMode('room'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'room' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Room</button>
+                                        <button onClick={() => { setCompMode('batch'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'batch' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Batch</button>
+                                    </div>
+                                    <button 
+                                        onClick={addCompSelection} 
+                                        disabled={compSelections.length >= 5}
+                                        className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[12px] transition-all border border-slate-700 shadow-sm ${compSelections.length >= 5 ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-slate-800 text-emerald-500 hover:bg-slate-700'}`}
+                                    >
+                                        <Icons.Plus /> Add
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative">
-                                {/* VS Badge */}
-                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-slate-900 border-4 border-slate-800 rounded-full w-12 h-12 flex items-center justify-center font-black text-slate-500 italic shadow-xl">VS</div>
+                            <div className={`grid gap-8 items-start relative ${
+                                compSelections.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 
+                                compSelections.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 
+                                compSelections.length === 4 ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4' : 
+                                'grid-cols-1 md:grid-cols-3 xl:grid-cols-5'
+                            }`}>
+                                {/* VS Badge - Only Show if exactly 2 items */}
+                                {compSelections.length === 2 && (
+                                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-slate-900 border-4 border-slate-800 rounded-full w-12 h-12 flex items-center justify-center font-black text-slate-500 italic shadow-xl">VS</div>
+                                )}
 
-                                {/* SIDE A */}
-                                <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800/60">
-                                    <div className="flex flex-col gap-4 mb-8">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                            <p className="text-[11px] font-black uppercase text-emerald-500 tracking-widest">Selection A</p>
-                                        </div>
-                                        {(compMode === 'cycle' || compMode === 'batch') && (
-                                            <select 
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
-                                                value={compA.cycle}
-                                                onChange={(e) => setCompA({...compA, cycle: e.target.value})}
-                                            >
-                                                <option value="">Select Cycle...</option>
-                                                {cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        )}
-                                        {(compMode === 'room' || (compMode === 'batch' && compA.cycle)) && (
-                                            <select 
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
-                                                value={compA.room}
-                                                onChange={(e) => setCompA({...compA, room: e.target.value})}
-                                            >
-                                                <option value="">Select Room...</option>
-                                                {roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}
-                                            </select>
-                                        )}
-                                    </div>
+                                {compSelections.map((selection, index) => {
+                                    const result = allCompStats.find(s => s.id === selection.id);
+                                    const stats = result ? result.stats : null;
+                                    const isBaseline = index === 0;
+                                    const baselineStats = allCompStats[0].stats;
 
-                                    {statsA ? (
-                                        <div className="space-y-6">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p>
-                                                <p className="text-[32px] font-black text-white leading-none">{statsA.gpl} <span className="text-[14px] text-slate-500 font-bold">GPL</span></p>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Yield</p>
-                                                    <p className="text-[18px] font-black text-slate-300">{statsA.yieldLb} lb</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Quality</p>
-                                                    <p className="text-[18px] font-black text-slate-300">{statsA.quality}%</p>
-                                                </div>
-                                            </div>
-                                            <div className="pt-6 border-t border-slate-800">
-                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p>
-                                                <div className="flex justify-between items-end">
-                                                    <p className="text-[20px] font-black text-emerald-400">${statsA.rpl}/L</p>
-                                                    <p className="text-[11px] font-bold text-slate-600">Total: ${Math.round(statsA.revenue).toLocaleString()}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">
-                                            Select Parameters
-                                        </div>
-                                    )}
-                                </div>
+                                    return (
+                                        <div key={selection.id} className={`bg-slate-900/50 rounded-3xl p-6 border transition-all hover:border-slate-700 relative group ${isBaseline ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800/60'}`}>
+                                            {/* Remove Button */}
+                                            {compSelections.length > 2 && (
+                                                <button 
+                                                    onClick={() => removeCompSelection(selection.id)}
+                                                    className="absolute top-4 right-4 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-2"
+                                                >
+                                                    <div className="scale-75"><Icons.X /></div>
+                                                </button>
+                                            )}
 
-                                {/* SIDE B */}
-                                <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800/60 text-right">
-                                    <div className="flex flex-col gap-4 mb-8 items-end">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <p className="text-[11px] font-black uppercase text-blue-500 tracking-widest">Selection B</p>
-                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                        </div>
-                                        {(compMode === 'cycle' || compMode === 'batch') && (
-                                            <select 
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-blue-500 transition-all text-right dir-rtl"
-                                                value={compB.cycle}
-                                                onChange={(e) => setCompB({...compB, cycle: e.target.value})}
-                                            >
-                                                <option value="">Select Cycle...</option>
-                                                {cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        )}
-                                        {(compMode === 'room' || (compMode === 'batch' && compB.cycle)) && (
-                                            <select 
-                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-blue-500 transition-all text-right"
-                                                value={compB.room}
-                                                onChange={(e) => setCompB({...compB, room: e.target.value})}
-                                            >
-                                                <option value="">Select Room...</option>
-                                                {roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}
-                                            </select>
-                                        )}
-                                    </div>
-
-                                    {statsB ? (
-                                        <div className="space-y-6">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p>
-                                                <div className="flex items-center justify-end gap-3">
-                                                    {statsA && renderMetricDiff(statsA.gpl, statsB.gpl)}
-                                                    <p className="text-[32px] font-black text-white leading-none">{statsB.gpl} <span className="text-[14px] text-slate-500 font-bold">GPL</span></p>
+                                            <div className="flex flex-col gap-4 mb-8">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className={`w-2 h-2 rounded-full ${isBaseline ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
+                                                    <p className={`text-[11px] font-black uppercase tracking-widest ${isBaseline ? 'text-emerald-500' : 'text-blue-500'}`}>
+                                                        {isBaseline ? 'Baseline (A)' : `Comparison (${String.fromCharCode(65 + index)})`}
+                                                    </p>
                                                 </div>
+                                                
+                                                {(compMode === 'cycle' || compMode === 'batch') && (
+                                                    <select 
+                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
+                                                        value={selection.cycle}
+                                                        onChange={(e) => updateCompSelection(selection.id, 'cycle', e.target.value)}
+                                                    >
+                                                        <option value="">Select Cycle...</option>
+                                                        {cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
+                                                    </select>
+                                                )}
+                                                {(compMode === 'room' || (compMode === 'batch' && selection.cycle)) && (
+                                                    <select 
+                                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
+                                                        value={selection.room}
+                                                        onChange={(e) => updateCompSelection(selection.id, 'room', e.target.value)}
+                                                    >
+                                                        <option value="">Select Room...</option>
+                                                        {roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}
+                                                    </select>
+                                                )}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Yield</p>
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {statsA && renderMetricDiff(statsA.yieldLb, statsB.yieldLb)}
-                                                        <p className="text-[18px] font-black text-slate-300">{statsB.yieldLb} lb</p>
+
+                                            {stats ? (
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p>
+                                                        <div className="flex items-center gap-3">
+                                                            <p className="text-[32px] font-black text-white leading-none">{stats.gpl} <span className="text-[14px] text-slate-500 font-bold">GPL</span></p>
+                                                            {!isBaseline && baselineStats && renderMetricDiff(baselineStats.gpl, stats.gpl)}
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Yield</p>
+                                                            <div className="flex flex-col items-start gap-1">
+                                                                <p className="text-[18px] font-black text-slate-300">{stats.yieldLb} lb</p>
+                                                                {!isBaseline && baselineStats && renderMetricDiff(baselineStats.yieldLb, stats.yieldLb)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Quality</p>
+                                                            <div className="flex flex-col items-start gap-1">
+                                                                <p className="text-[18px] font-black text-slate-300">{stats.quality}%</p>
+                                                                {!isBaseline && baselineStats && renderMetricDiff(baselineStats.quality, stats.quality, '%')}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="pt-6 border-t border-slate-800">
+                                                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p>
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex justify-between items-center">
+                                                                <p className={`text-[20px] font-black ${isBaseline ? 'text-emerald-400' : 'text-blue-400'}`}>${stats.rpl}/L</p>
+                                                                {!isBaseline && baselineStats && renderMetricDiff(baselineStats.rpl, stats.rpl)}
+                                                            </div>
+                                                            <p className="text-[11px] font-bold text-slate-600">Total: ${Math.round(stats.revenue).toLocaleString()}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Quality</p>
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {statsA && renderMetricDiff(statsA.quality, statsB.quality, '%')}
-                                                        <p className="text-[18px] font-black text-slate-300">{statsB.quality}%</p>
-                                                    </div>
+                                            ) : (
+                                                <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">
+                                                    Select Parameters
                                                 </div>
-                                            </div>
-                                            <div className="pt-6 border-t border-slate-800">
-                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p>
-                                                <div className="flex justify-between items-end flex-row-reverse">
-                                                    <div className="flex items-center gap-2">
-                                                        {statsA && renderMetricDiff(statsA.rpl, statsB.rpl)}
-                                                        <p className="text-[20px] font-black text-blue-400">${statsB.rpl}/L</p>
-                                                    </div>
-                                                    <p className="text-[11px] font-bold text-slate-600">Total: ${Math.round(statsB.revenue).toLocaleString()}</p>
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">
-                                            Select Parameters
-                                        </div>
-                                    )}
-                                </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -1184,6 +1197,18 @@
                                 </div>
                                 
                                 <div className="space-y-8">
+                                    {/* Data Source Toggle */}
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4 text-blue-500">
+                                            <Icons.Globe />
+                                            <h3 className="text-sm font-black uppercase tracking-widest">Data Source</h3>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-2 rounded-2xl border border-slate-800 flex gap-2">
+                                            <button onClick={() => setDataSource('live')} className={`flex-1 py-3 text-xs font-black uppercase rounded-xl transition-all ${dataSource === 'live' ? 'bg-slate-800 text-emerald-500 shadow-lg border border-slate-700' : 'text-slate-500 hover:text-slate-300'}`}>Live Production</button>
+                                            <button onClick={() => setDataSource('sample')} className={`flex-1 py-3 text-xs font-black uppercase rounded-xl transition-all ${dataSource === 'sample' ? 'bg-slate-800 text-emerald-500 shadow-lg border border-slate-700' : 'text-slate-400 hover:text-slate-300'}`}>Demo Data</button>
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <div className="flex items-center gap-3 mb-4 text-emerald-500">
                                             <Icons.Coins />
@@ -1219,8 +1244,9 @@
                                     </div>
                                 </div>
                                 
-                                <div className="mt-8 pt-6 border-t border-slate-800 text-center">
+                                <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col gap-3">
                                     <button onClick={() => setShowSettingsModal(false)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase py-4 rounded-2xl transition-all shadow-lg">Save Changes</button>
+                                    <button onClick={resetDefaults} className="w-full bg-transparent hover:bg-slate-800/50 text-slate-500 hover:text-rose-400 font-bold uppercase py-3 rounded-2xl transition-all text-xs">Reset to Defaults</button>
                                 </div>
                             </div>
                         </div>
