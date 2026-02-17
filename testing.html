@@ -115,7 +115,7 @@
             }, []);
             return (
                 <div className="relative flex-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner px-4 py-3 flex items-center gap-3 min-w-[140px]" ref={wrapperRef}>
-                    <span className="text-[11px] font-black text-slate-600 uppercase whitespace-nowrap">{label}:</span>
+                    <span className="text-[11px] font-black text-slate-900 uppercase whitespace-nowrap">{label}:</span>
                     <button onClick={() => setIsOpen(!isOpen)} className="flex-1 bg-white border border-slate-300 text-slate-900 text-[13px] font-black px-3 py-1 rounded-lg uppercase flex items-center justify-between shadow-sm hover:border-emerald-500 transition-all outline-none">
                         <span className="truncate mr-2">{selected === 'All' ? 'All' : selected}</span>
                         <Icons.Chevron />
@@ -124,7 +124,7 @@
                     {isOpen && (
                         <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar p-1">
                             {options.map(opt => (
-                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-3 py-2 text-[11px] font-bold uppercase cursor-pointer rounded-lg hover:bg-slate-100 ${selected === opt ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500'}`}>
+                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-3 py-2 text-[11px] font-bold uppercase cursor-pointer rounded-lg hover:bg-slate-100 ${selected === opt ? 'text-emerald-600 bg-emerald-50' : 'text-slate-900'}`}>
                                     {opt}
                                 </div>
                             ))}
