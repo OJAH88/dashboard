@@ -114,7 +114,7 @@
             }, []);
             return (
                 <div className="relative flex-1" ref={wrapperRef}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-slate-900 text-[11px] font-black px-3 py-2 rounded-xl border border-slate-800 uppercase flex items-center justify-between shadow-sm hover:border-slate-700 transition-all text-slate-300">
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-slate-900 text-[11px] font-black px-3 py-4 rounded-xl border border-slate-800 uppercase flex items-center justify-between shadow-sm hover:border-slate-700 transition-all text-slate-300">
                         <span className="truncate mr-2">{selected === 'All' ? `All ${label}s` : selected}</span>
                         <Icons.Chevron />
                     </button>
@@ -394,7 +394,7 @@
                                     <div className="flex items-center gap-5 bg-slate-100 px-5 py-3 rounded-2xl border border-slate-200 shadow-inner text-slate-900">
                                         <div className="flex items-center gap-2 border-r border-slate-300 pr-5">
                                             <Icons.Coins />
-                                            <span className="text-[11px] font-black text-slate-500 uppercase leading-tight">Sale Price<br/>Per Gram</span>
+                                            <span className="text-[11px] font-black text-slate-900 uppercase leading-tight">Sale Price<br/>Per Gram</span>
                                         </div>
                                         {[{l: 'Flower A', v: priceA, s: setPriceA}, {l: 'Smalls', v: priceB, s: setPriceB}, {l: 'Trim', v: priceC, s: setPriceC}].map(p => (
                                             <div key={p.l} className="flex items-center gap-2">
