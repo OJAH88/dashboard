@@ -559,15 +559,6 @@
                                             </div>
                                         ))}
                                     </div>
-
-                                    {/* Goal */}
-                                    <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-inner text-slate-900">
-                                        <span className="text-[9px] font-black text-slate-600 uppercase whitespace-nowrap">Flower Yield Ratio Goal:</span>
-                                        <div className="flex items-center">
-                                            <input type="number" value={targetQuality} onChange={e => setTargetQuality(parseInt(e.target.value))} className="bg-white border border-slate-300 rounded-md px-1 py-0.5 text-[11px] font-black w-10 focus:border-amber-500 shadow-sm outline-none text-center" />
-                                            <span className="text-[10px] font-black text-slate-400 ml-0.5">%</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -578,8 +569,17 @@
                             </div>
 
                             <div className="flex items-center gap-3 shrink-0">
-                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-2 font-black text-[11px] uppercase transition-all"><Icons.Plus /> Add Entry</button>
-                                <button onClick={() => autoFetch(fetchLink)} className={`p-2.5 rounded-xl transition-all shadow-md bg-slate-800 hover:bg-slate-700 text-white`}><Icons.Refresh animate={isLoading} /></button>
+                                {/* Goal */}
+                                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-inner text-slate-900 h-10">
+                                    <span className="text-[9px] font-black text-slate-600 uppercase whitespace-nowrap">Goal:</span>
+                                    <div className="flex items-center">
+                                        <input type="number" value={targetQuality} onChange={e => setTargetQuality(parseInt(e.target.value))} className="bg-white border border-slate-300 rounded-md px-1 py-0.5 text-[11px] font-black w-10 focus:border-amber-500 shadow-sm outline-none text-center" />
+                                        <span className="text-[10px] font-black text-slate-400 ml-0.5">%</span>
+                                    </div>
+                                </div>
+
+                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-2 font-black text-[11px] uppercase transition-all h-10"><Icons.Plus /> Add Entry</button>
+                                <button onClick={() => autoFetch(fetchLink)} className={`p-2.5 rounded-xl transition-all shadow-md bg-slate-800 hover:bg-slate-700 text-white h-10 w-10 flex items-center justify-center`}><Icons.Refresh animate={isLoading} /></button>
                             </div>
                         </div>
                     </div>
