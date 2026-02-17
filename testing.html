@@ -383,23 +383,43 @@
                         rooms: [], 
                         totalYieldG: 0, 
                         totalLights: 0, 
-                        totalPremiumG: 0 
+                        totalPremiumG: 0,
+                        strains: {},
+                        roomsAgg: {}
                     };
-                    groups[cid].rooms.push({
+                    
+                    // Add Row Data
+                    const rowData = {
                         id: d["Room ID"],
                         strain: d["Strain Name"],
                         yieldG: d["Total Yield (G)"],
                         premiumG: d["Flower (A)"],
                         lights: d["Lights"],
                         gpl: d["Grams per Light"]
-                    });
+                    };
+                    groups[cid].rooms.push(rowData);
                     groups[cid].totalYieldG += d["Total Yield (G)"];
                     groups[cid].totalLights += d["Lights"];
                     groups[cid].totalPremiumG += d["Flower (A)"];
+
+                    // Strain Aggregation
+                    const s = d["Strain Name"];
+                    if (!groups[cid].strains[s]) groups[cid].strains[s] = { name: s, yieldG: 0, premiumG: 0, lights: 0 };
+                    groups[cid].strains[s].yieldG += d["Total Yield (G)"];
+                    groups[cid].strains[s].premiumG += d["Flower (A)"];
+                    groups[cid].strains[s].lights += d["Lights"];
+
+                    // Room Aggregation
+                    const r = d["Room ID"];
+                    if (!groups[cid].roomsAgg[r]) groups[cid].roomsAgg[r] = { name: r, yieldG: 0, premiumG: 0, lights: 0 };
+                    groups[cid].roomsAgg[r].yieldG += d["Total Yield (G)"];
+                    groups[cid].roomsAgg[r].premiumG += d["Flower (A)"];
+                    groups[cid].roomsAgg[r].lights += d["Lights"];
                 });
 
                 return Object.values(groups).map(g => {
                     const yieldLb = (g.totalYieldG / 1000) * KG_TO_LB;
+                    const flowerLb = (g.totalPremiumG / 1000) * KG_TO_LB;
                     const gpl = g.totalLights > 0 ? (g.totalYieldG / g.totalLights).toFixed(1) : 0;
                     const quality = g.totalYieldG > 0 ? ((g.totalPremiumG / g.totalYieldG) * 100).toFixed(1) : 0;
                     
@@ -410,21 +430,36 @@
                         gpl: r.gpl.toFixed(1),
                         quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0
                     })).sort((a,b) => {
-                        // Sort by Room ID numerically first
                         const roomSort = a.id.localeCompare(b.id, undefined, {numeric: true});
                         if (roomSort !== 0) return roomSort;
-                        // Then by Strain Name alphabetically
                         return a.strain.localeCompare(b.strain);
                     });
+
+                    const formattedStrains = Object.values(g.strains).map(s => ({
+                        name: s.name,
+                        yieldLb: ((s.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        gpl: s.lights > 0 ? (s.yieldG / s.lights).toFixed(1) : 0,
+                        quality: s.yieldG > 0 ? ((s.premiumG / s.yieldG) * 100).toFixed(1) : 0
+                    })).sort((a,b) => b.gpl - a.gpl);
+
+                    const formattedRoomsAgg = Object.values(g.roomsAgg).map(r => ({
+                        name: r.name,
+                        yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        gpl: r.lights > 0 ? (r.yieldG / r.lights).toFixed(1) : 0,
+                        quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0
+                    })).sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
                     return {
                         id: g.id,
                         yieldLb: yieldLb.toFixed(1),
+                        flowerLb: flowerLb.toFixed(1),
                         gpl,
                         quality,
-                        rooms: formattedRooms
+                        rooms: formattedRooms,
+                        strainsAgg: formattedStrains,
+                        roomsAgg: formattedRoomsAgg
                     };
-                }).sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})); // Sorted Cycles Numerically (Ascending)
+                }).sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})); 
             }, [filteredData]);
 
             // --- COMPARATOR LOGIC ---
@@ -661,7 +696,7 @@
                         </div>
 
                         {/* CYCLE BREAKDOWN LIST */}
-                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden">
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden mb-20">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
                                 <div className="flex items-center gap-5">
                                     <div className="bg-blue-500/10 p-4 rounded-2xl text-blue-500"><Icons.List /></div>
@@ -696,6 +731,10 @@
                                                     <p className="text-[18px] font-black text-slate-200">{cycle.yieldLb} lb</p>
                                                 </div>
                                                 <div className="text-right">
+                                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Flower Yield</p>
+                                                    <p className="text-[18px] font-black text-emerald-400">{cycle.flowerLb} lb</p>
+                                                </div>
+                                                <div className="text-right">
                                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg Efficiency</p>
                                                     <p className={`text-[18px] font-black ${cycle.gpl >= 100 ? 'text-emerald-400' : 'text-blue-400'}`}>{cycle.gpl} GPL</p>
                                                 </div>
@@ -712,29 +751,87 @@
                                         {/* Expanded Details */}
                                         {expandedCycle === cycle.id && (
                                             <div className="border-t border-slate-800 bg-slate-950/30 p-6 animate-in slide-in-from-top-2 duration-200">
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-left">
-                                                        <thead>
-                                                            <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
-                                                                <th className="pb-4 pl-4">Room</th>
-                                                                <th className="pb-4">Strain</th>
-                                                                <th className="pb-4 text-right">Yield (lb)</th>
-                                                                <th className="pb-4 text-right">Efficiency</th>
-                                                                <th className="pb-4 text-right pr-4">Quality Mix</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="text-[14px] font-bold text-slate-300">
-                                                            {cycle.rooms.map((room, idx) => (
-                                                                <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/20 transition-colors">
-                                                                    <td className="py-4 pl-4 text-white">{room.id}</td>
-                                                                    <td className="py-4 text-emerald-400">{room.strain}</td>
-                                                                    <td className="py-4 text-right">{room.yieldLb}</td>
-                                                                    <td className="py-4 text-right text-blue-400">{room.gpl} GPL</td>
-                                                                    <td className="py-4 text-right pr-4 text-amber-500">{room.quality}%</td>
+                                                {/* Totals by Strain */}
+                                                <div className="mb-8">
+                                                    <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Strain Totals</h4>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left">
+                                                            <thead>
+                                                                <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
+                                                                    <th className="pb-3 pl-2">Strain</th>
+                                                                    <th className="pb-3 text-right">Total Yield</th>
+                                                                    <th className="pb-3 text-right">Avg Eff</th>
+                                                                    <th className="pb-3 text-right pr-2">Avg Quality</th>
                                                                 </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
+                                                            </thead>
+                                                            <tbody className="text-[13px] font-bold text-slate-300">
+                                                                {cycle.strainsAgg.map((s, idx) => (
+                                                                    <tr key={idx} className="border-b border-slate-800/30 last:border-0 hover:bg-slate-800/10">
+                                                                        <td className="py-2 pl-2 text-emerald-400">{s.name}</td>
+                                                                        <td className="py-2 text-right">{s.yieldLb} lb</td>
+                                                                        <td className="py-2 text-right text-blue-400">{s.gpl} GPL</td>
+                                                                        <td className="py-2 text-right pr-2 text-amber-500">{s.quality}%</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                {/* Totals by Room */}
+                                                <div className="mb-8">
+                                                    <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Room Totals</h4>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left">
+                                                            <thead>
+                                                                <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
+                                                                    <th className="pb-3 pl-2">Room</th>
+                                                                    <th className="pb-3 text-right">Total Yield</th>
+                                                                    <th className="pb-3 text-right">Avg Eff</th>
+                                                                    <th className="pb-3 text-right pr-2">Avg Quality</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="text-[13px] font-bold text-slate-300">
+                                                                {cycle.roomsAgg.map((r, idx) => (
+                                                                    <tr key={idx} className="border-b border-slate-800/30 last:border-0 hover:bg-slate-800/10">
+                                                                        <td className="py-2 pl-2 text-white">{r.name}</td>
+                                                                        <td className="py-2 text-right">{r.yieldLb} lb</td>
+                                                                        <td className="py-2 text-right text-blue-400">{r.gpl} GPL</td>
+                                                                        <td className="py-2 text-right pr-2 text-amber-500">{r.quality}%</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                {/* Batch Details */}
+                                                <div>
+                                                    <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Batch Details</h4>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left">
+                                                            <thead>
+                                                                <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
+                                                                    <th className="pb-4 pl-4">Room</th>
+                                                                    <th className="pb-4">Strain</th>
+                                                                    <th className="pb-4 text-right">Yield (lb)</th>
+                                                                    <th className="pb-4 text-right">Efficiency</th>
+                                                                    <th className="pb-4 text-right pr-4">Flower Ratio</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="text-[14px] font-bold text-slate-300">
+                                                                {cycle.rooms.map((room, idx) => (
+                                                                    <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/20 transition-colors">
+                                                                        <td className="py-4 pl-4 text-white">{room.id}</td>
+                                                                        <td className="py-4 text-emerald-400">{room.strain}</td>
+                                                                        <td className="py-4 text-right">{room.yieldLb}</td>
+                                                                        <td className="py-4 text-right text-blue-400">{room.gpl} GPL</td>
+                                                                        <td className="py-4 text-right pr-4 text-amber-500">{room.quality}%</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
@@ -749,7 +846,7 @@
                                 <div className="flex items-center gap-5">
                                     <div className="bg-purple-500/10 p-4 rounded-2xl text-purple-400"><Icons.Scale /></div>
                                     <div>
-                                        <h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Head-to-Head Comparator</h2>
+                                        <h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Performance Face-Off</h2>
                                         <p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Analyze Performance Deltas</p>
                                     </div>
                                 </div>
