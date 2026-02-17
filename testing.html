@@ -102,6 +102,7 @@
             Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             Coins: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
             Crown: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
+            List: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>,
         };
 
         const MultiSelect = ({ label, options, selected, onChange }) => {
@@ -145,6 +146,7 @@
             const [showEntryModal, setShowEntryModal] = useState(false);
             const [revenueMode, setRevenueMode] = useState('rpl'); 
             const [targetQuality, setTargetQuality] = useState(70);
+            const [expandedCycle, setExpandedCycle] = useState(null);
 
             const [priceA, setPriceA] = useState(3.97);
             const [priceB, setPriceB] = useState(2.20);
@@ -155,6 +157,11 @@
             const [selectedStrain, setSelectedStrain] = useState('All');
 
             const naturalSort = (arr) => [...arr].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+            // --- COMPARATOR STATE ---
+            const [compMode, setCompMode] = useState('cycle'); // 'cycle', 'room', 'batch'
+            const [compA, setCompA] = useState({ cycle: '', room: '' });
+            const [compB, setCompB] = useState({ cycle: '', room: '' });
 
             const parseCSV = (text) => {
                 const lines = text.split(/\r?\n/).filter(line => line.trim());
@@ -367,6 +374,115 @@
                 });
             }, [filteredData, roomOptions, strainOptions, selectedStrain, matrixMetric]);
 
+            const cycleBreakdown = useMemo(() => {
+                const groups = {};
+                filteredData.forEach(d => {
+                    const cid = d["Cycle ID"];
+                    if (!groups[cid]) groups[cid] = { 
+                        id: cid, 
+                        rooms: [], 
+                        totalYieldG: 0, 
+                        totalLights: 0, 
+                        totalPremiumG: 0 
+                    };
+                    groups[cid].rooms.push({
+                        id: d["Room ID"],
+                        strain: d["Strain Name"],
+                        yieldG: d["Total Yield (G)"],
+                        premiumG: d["Flower (A)"],
+                        lights: d["Lights"],
+                        gpl: d["Grams per Light"]
+                    });
+                    groups[cid].totalYieldG += d["Total Yield (G)"];
+                    groups[cid].totalLights += d["Lights"];
+                    groups[cid].totalPremiumG += d["Flower (A)"];
+                });
+
+                return Object.values(groups).map(g => {
+                    const yieldLb = (g.totalYieldG / 1000) * KG_TO_LB;
+                    const gpl = g.totalLights > 0 ? (g.totalYieldG / g.totalLights).toFixed(1) : 0;
+                    const quality = g.totalYieldG > 0 ? ((g.totalPremiumG / g.totalYieldG) * 100).toFixed(1) : 0;
+                    
+                    const formattedRooms = g.rooms.map(r => ({
+                        id: r.id,
+                        strain: r.strain,
+                        yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1),
+                        gpl: r.gpl.toFixed(1),
+                        quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0
+                    })).sort((a,b) => {
+                        // Sort by Room ID numerically first
+                        const roomSort = a.id.localeCompare(b.id, undefined, {numeric: true});
+                        if (roomSort !== 0) return roomSort;
+                        // Then by Strain Name alphabetically
+                        return a.strain.localeCompare(b.strain);
+                    });
+
+                    return {
+                        id: g.id,
+                        yieldLb: yieldLb.toFixed(1),
+                        gpl,
+                        quality,
+                        rooms: formattedRooms
+                    };
+                }).sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})); // Sorted Cycles Numerically (Ascending)
+            }, [filteredData]);
+
+            // --- COMPARATOR LOGIC ---
+            const getCompStats = (selection) => {
+                let subset = [];
+                if (!selection.cycle && !selection.room) return null;
+
+                if (compMode === 'cycle') {
+                    if (!selection.cycle) return null;
+                    subset = data.filter(d => d["Cycle ID"] === selection.cycle);
+                } else if (compMode === 'room') {
+                    if (!selection.room) return null;
+                    subset = data.filter(d => d["Room ID"] === selection.room);
+                } else if (compMode === 'batch') {
+                    if (!selection.cycle || !selection.room) return null;
+                    subset = data.filter(d => d["Cycle ID"] === selection.cycle && d["Room ID"] === selection.room);
+                }
+
+                if (subset.length === 0) return null;
+
+                const lights = subset.reduce((acc, d) => acc + d["Lights"], 0) || 1;
+                const totalYield = subset.reduce((acc, d) => acc + d["Total Yield (G)"], 0);
+                const premium = subset.reduce((acc, d) => acc + d["Flower (A)"], 0);
+                
+                // Revenue calc
+                const revA = premium * priceA;
+                const revB = subset.reduce((acc, d) => acc + d["Smalls (B)"], 0) * priceB;
+                const revC = subset.reduce((acc, d) => acc + d["Trim (C)"], 0) * priceC;
+                const totalRev = revA + revB + revC;
+
+                return {
+                    yieldLb: ((totalYield / 1000) * KG_TO_LB).toFixed(1),
+                    gpl: (totalYield / lights).toFixed(1),
+                    quality: totalYield > 0 ? ((premium / totalYield) * 100).toFixed(1) : "0",
+                    revenue: totalRev,
+                    rpl: (totalRev / lights).toFixed(2),
+                    count: subset.length
+                };
+            };
+
+            const statsA = useMemo(() => getCompStats(compA), [compA, compMode, data, priceA, priceB, priceC]);
+            const statsB = useMemo(() => getCompStats(compB), [compB, compMode, data, priceA, priceB, priceC]);
+
+            const renderMetricDiff = (valA, valB, suffix = '', inverse = false) => {
+                if (!valA || !valB) return null;
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                const diff = numB - numA;
+                if (diff === 0) return <span className="text-slate-500 text-[10px] font-bold">-</span>;
+                
+                const isPositive = diff > 0;
+                const isGood = inverse ? !isPositive : isPositive; // For things where lower is better, inverse=true (none here yet)
+                const color = isGood ? 'text-emerald-400' : 'text-rose-400';
+                const sign = isPositive ? '+' : '';
+                
+                return <span className={`${color} text-[10px] font-black bg-slate-900 px-1.5 py-0.5 rounded-md`}>{sign}{diff.toFixed(1)}{suffix}</span>;
+            };
+
             return (
                 <div className="min-h-screen bg-slate-950 text-slate-100 transition-all duration-500 pb-32">
                     {/* STICKY HEADER */}
@@ -540,6 +656,244 @@
                                             <p className={`text-[16px] font-black ${b.c}`}>{b.v}</p>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* CYCLE BREAKDOWN LIST */}
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
+                                <div className="flex items-center gap-5">
+                                    <div className="bg-blue-500/10 p-4 rounded-2xl text-blue-500"><Icons.List /></div>
+                                    <div>
+                                        <h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Cycle History Detail</h2>
+                                        <p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Expand cycles to view individual room performance</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                {cycleBreakdown.map(cycle => (
+                                    <div key={cycle.id} className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden transition-all hover:border-slate-700">
+                                        {/* Cycle Header (Clickable) */}
+                                        <div 
+                                            onClick={() => setExpandedCycle(expandedCycle === cycle.id ? null : cycle.id)}
+                                            className="p-6 flex flex-wrap items-center justify-between cursor-pointer group hover:bg-slate-800/50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-6">
+                                                <div className={`p-3 rounded-xl transition-colors ${expandedCycle === cycle.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 group-hover:text-white'}`}>
+                                                    <Icons.Chevron /> 
+                                                </div>
+                                                <div>
+                                                    <p className="text-[12px] font-black text-slate-500 uppercase tracking-widest">Cycle</p>
+                                                    <h3 className="text-[24px] font-black text-slate-200">{cycle.id}</h3>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-8 md:gap-16">
+                                                <div className="text-right">
+                                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Yield</p>
+                                                    <p className="text-[18px] font-black text-slate-200">{cycle.yieldLb} lb</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg Efficiency</p>
+                                                    <p className={`text-[18px] font-black ${cycle.gpl >= 100 ? 'text-emerald-400' : 'text-blue-400'}`}>{cycle.gpl} GPL</p>
+                                                </div>
+                                                <div className="text-right hidden sm:block">
+                                                    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg Quality</p>
+                                                    <p className={`text-[18px] font-black ${cycle.quality >= targetQuality ? 'text-emerald-400' : 'text-amber-500'}`}>{cycle.quality}%</p>
+                                                </div>
+                                                <div className={`transform transition-transform duration-300 text-slate-500 ${expandedCycle === cycle.id ? 'rotate-180' : ''}`}>
+                                                    <Icons.Chevron />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded Details */}
+                                        {expandedCycle === cycle.id && (
+                                            <div className="border-t border-slate-800 bg-slate-950/30 p-6 animate-in slide-in-from-top-2 duration-200">
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left">
+                                                        <thead>
+                                                            <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
+                                                                <th className="pb-4 pl-4">Room</th>
+                                                                <th className="pb-4">Strain</th>
+                                                                <th className="pb-4 text-right">Yield (lb)</th>
+                                                                <th className="pb-4 text-right">Efficiency</th>
+                                                                <th className="pb-4 text-right pr-4">Quality Mix</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="text-[14px] font-bold text-slate-300">
+                                                            {cycle.rooms.map((room, idx) => (
+                                                                <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/20 transition-colors">
+                                                                    <td className="py-4 pl-4 text-white">{room.id}</td>
+                                                                    <td className="py-4 text-emerald-400">{room.strain}</td>
+                                                                    <td className="py-4 text-right">{room.yieldLb}</td>
+                                                                    <td className="py-4 text-right text-blue-400">{room.gpl} GPL</td>
+                                                                    <td className="py-4 text-right pr-4 text-amber-500">{room.quality}%</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* HEAD-TO-HEAD COMPARATOR */}
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden mb-8">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
+                                <div className="flex items-center gap-5">
+                                    <div className="bg-purple-500/10 p-4 rounded-2xl text-purple-400"><Icons.Scale /></div>
+                                    <div>
+                                        <h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Head-to-Head Comparator</h2>
+                                        <p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Analyze Performance Deltas</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                    <button onClick={() => { setCompMode('cycle'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'cycle' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Cycle</button>
+                                    <button onClick={() => { setCompMode('room'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'room' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Room</button>
+                                    <button onClick={() => { setCompMode('batch'); setCompA({}); setCompB({}); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'batch' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Batch</button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative">
+                                {/* VS Badge */}
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-slate-900 border-4 border-slate-800 rounded-full w-12 h-12 flex items-center justify-center font-black text-slate-500 italic shadow-xl">VS</div>
+
+                                {/* SIDE A */}
+                                <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800/60">
+                                    <div className="flex flex-col gap-4 mb-8">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                            <p className="text-[11px] font-black uppercase text-emerald-500 tracking-widest">Selection A</p>
+                                        </div>
+                                        {(compMode === 'cycle' || compMode === 'batch') && (
+                                            <select 
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
+                                                value={compA.cycle}
+                                                onChange={(e) => setCompA({...compA, cycle: e.target.value})}
+                                            >
+                                                <option value="">Select Cycle...</option>
+                                                {cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        )}
+                                        {(compMode === 'room' || (compMode === 'batch' && compA.cycle)) && (
+                                            <select 
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all"
+                                                value={compA.room}
+                                                onChange={(e) => setCompA({...compA, room: e.target.value})}
+                                            >
+                                                <option value="">Select Room...</option>
+                                                {roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    {statsA ? (
+                                        <div className="space-y-6">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p>
+                                                <p className="text-[32px] font-black text-white leading-none">{statsA.gpl} <span className="text-[14px] text-slate-500 font-bold">GPL</span></p>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Yield</p>
+                                                    <p className="text-[18px] font-black text-slate-300">{statsA.yieldLb} lb</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Quality</p>
+                                                    <p className="text-[18px] font-black text-slate-300">{statsA.quality}%</p>
+                                                </div>
+                                            </div>
+                                            <div className="pt-6 border-t border-slate-800">
+                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p>
+                                                <div className="flex justify-between items-end">
+                                                    <p className="text-[20px] font-black text-emerald-400">${statsA.rpl}/L</p>
+                                                    <p className="text-[11px] font-bold text-slate-600">Total: ${Math.round(statsA.revenue).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">
+                                            Select Parameters
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* SIDE B */}
+                                <div className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800/60 text-right">
+                                    <div className="flex flex-col gap-4 mb-8 items-end">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <p className="text-[11px] font-black uppercase text-blue-500 tracking-widest">Selection B</p>
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                        </div>
+                                        {(compMode === 'cycle' || compMode === 'batch') && (
+                                            <select 
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-blue-500 transition-all text-right dir-rtl"
+                                                value={compB.cycle}
+                                                onChange={(e) => setCompB({...compB, cycle: e.target.value})}
+                                            >
+                                                <option value="">Select Cycle...</option>
+                                                {cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        )}
+                                        {(compMode === 'room' || (compMode === 'batch' && compB.cycle)) && (
+                                            <select 
+                                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-blue-500 transition-all text-right"
+                                                value={compB.room}
+                                                onChange={(e) => setCompB({...compB, room: e.target.value})}
+                                            >
+                                                <option value="">Select Room...</option>
+                                                {roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    {statsB ? (
+                                        <div className="space-y-6">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    {statsA && renderMetricDiff(statsA.gpl, statsB.gpl)}
+                                                    <p className="text-[32px] font-black text-white leading-none">{statsB.gpl} <span className="text-[14px] text-slate-500 font-bold">GPL</span></p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Yield</p>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {statsA && renderMetricDiff(statsA.yieldLb, statsB.yieldLb)}
+                                                        <p className="text-[18px] font-black text-slate-300">{statsB.yieldLb} lb</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Quality</p>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {statsA && renderMetricDiff(statsA.quality, statsB.quality, '%')}
+                                                        <p className="text-[18px] font-black text-slate-300">{statsB.quality}%</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pt-6 border-t border-slate-800">
+                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p>
+                                                <div className="flex justify-between items-end flex-row-reverse">
+                                                    <div className="flex items-center gap-2">
+                                                        {statsA && renderMetricDiff(statsA.rpl, statsB.rpl)}
+                                                        <p className="text-[20px] font-black text-blue-400">${statsB.rpl}/L</p>
+                                                    </div>
+                                                    <p className="text-[11px] font-bold text-slate-600">Total: ${Math.round(statsB.revenue).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">
+                                            Select Parameters
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
