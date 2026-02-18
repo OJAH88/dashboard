@@ -1,0 +1,306 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Thermometer, 
+  Droplets, 
+  Sun, 
+  Wind, 
+  Activity, 
+  Calendar, 
+  AlertTriangle, 
+  Sprout, 
+  Settings,
+  Fan,
+  Timer
+} from 'lucide-react';
+
+const CultivationDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Simulated State for Environment
+  const [envData, setEnvData] = useState({
+    temp: 78.4,
+    humidity: 45,
+    co2: 1100,
+    vpd: 1.2,
+    ph: 6.2,
+    ec: 1.8,
+    waterTemp: 68
+  });
+
+  // Light Cycle State
+  const [lightsOn, setLightsOn] = useState(true);
+  const [dimmerLevel, setDimmerLevel] = useState(80);
+
+  // Update clock
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const MetricCard = ({ title, value, unit, icon: Icon, color, trend }) => (
+    <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm flex items-center justify-between">
+      <div>
+        <p className="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</p>
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-bold text-stone-800">{value}</span>
+          <span className="text-sm text-stone-400 font-medium">{unit}</span>
+        </div>
+        {trend && (
+          <span className={`text-xs font-medium ${trend > 0 ? 'text-green-600' : 'text-red-500'}`}>
+            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% from last hour
+          </span>
+        )}
+      </div>
+      <div className={`p-3 rounded-full ${color} bg-opacity-10 text-white`}>
+        <Icon size={24} className={color.replace('bg-', 'text-')} />
+      </div>
+    </div>
+  );
+
+  const ControlToggle = ({ label, isActive, onToggle, icon: Icon }) => (
+    <button 
+      onClick={onToggle}
+      className={`
+        flex items-center justify-between w-full p-4 rounded-xl border transition-all
+        ${isActive 
+          ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' 
+          : 'bg-white border-stone-200 hover:border-emerald-300'
+        }
+      `}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${isActive ? 'bg-emerald-500 text-white' : 'bg-stone-100 text-stone-400'}`}>
+          <Icon size={20} />
+        </div>
+        <span className={`font-medium ${isActive ? 'text-emerald-900' : 'text-stone-600'}`}>{label}</span>
+      </div>
+      <div className={`
+        w-10 h-6 rounded-full relative transition-colors duration-300
+        ${isActive ? 'bg-emerald-500' : 'bg-stone-300'}
+      `}>
+        <div className={`
+          absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300
+          ${isActive ? 'translate-x-4' : 'translate-x-0'}
+        `} />
+      </div>
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen bg-stone-50 font-sans text-stone-800 pb-12">
+      {/* Sidebar / Navigation (Mobile simplified to top bar for this view) */}
+      <nav className="bg-stone-900 text-emerald-400 p-4 sticky top-0 z-50 shadow-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sprout size={28} />
+            <h1 className="text-xl font-bold text-white tracking-tight">Canna<span className="text-emerald-500">Grow</span>OS</h1>
+          </div>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-400">
+            <button className="text-white hover:text-emerald-400 transition-colors">Dashboard</button>
+            <button className="hover:text-emerald-400 transition-colors">Grow Log</button>
+            <button className="hover:text-emerald-400 transition-colors">Genetics</button>
+            <button className="hover:text-emerald-400 transition-colors">Settings</button>
+          </div>
+          <div className="flex items-center gap-3 bg-stone-800 py-1 px-3 rounded-full border border-stone-700">
+            <div className={`w-2 h-2 rounded-full ${lightsOn ? 'bg-green-500 animate-pulse' : 'bg-stone-500'}`}></div>
+            <span className="text-xs font-mono text-stone-300">
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        
+        {/* Alerts Section */}
+        {envData.vpd < 0.8 && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex items-start gap-3">
+            <AlertTriangle className="text-amber-500 shrink-0" size={20} />
+            <div>
+              <h3 className="font-bold text-amber-900 text-sm">Low VPD Warning</h3>
+              <p className="text-amber-700 text-sm mt-1">Vapor Pressure Deficit is currently {envData.vpd} kPa. Risk of mold increased. Check dehumidifiers.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Room Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-stone-800">Flower Room A</h2>
+            <p className="text-stone-500">Day 42 of Flower • Strain: Blue Dream</p>
+          </div>
+          <div className="flex gap-2">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+              PHASE: FLOWERING
+            </span>
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
+              WEEK 6
+            </span>
+          </div>
+        </div>
+
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <MetricCard 
+            title="Air Temp" 
+            value={`${envData.temp}°`} 
+            unit="F" 
+            icon={Thermometer} 
+            color="bg-red-500"
+            trend={1.2}
+          />
+          <MetricCard 
+            title="Humidity" 
+            value={`${envData.humidity}`} 
+            unit="%" 
+            icon={Droplets} 
+            color="bg-blue-500"
+            trend={-0.5}
+          />
+          <MetricCard 
+            title="VPD" 
+            value={envData.vpd} 
+            unit="kPa" 
+            icon={Wind} 
+            color="bg-purple-500"
+          />
+           <MetricCard 
+            title="CO2 PPM" 
+            value={envData.co2} 
+            unit="ppm" 
+            icon={Activity} 
+            color="bg-stone-500"
+          />
+        </div>
+
+        {/* Main Control Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Environment Controls */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+            <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+              <h3 className="font-bold text-stone-700 flex items-center gap-2">
+                <Settings size={18} /> Environment Controllers
+              </h3>
+              <span className="text-xs text-stone-400">Auto-Mode Active</span>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ControlToggle 
+                label="Main Lights (LED)" 
+                isActive={lightsOn} 
+                onToggle={() => setLightsOn(!lightsOn)} 
+                icon={Sun}
+              />
+              <ControlToggle 
+                label="Exhaust Fans" 
+                isActive={true} 
+                onToggle={() => {}} 
+                icon={Fan}
+              />
+              <ControlToggle 
+                label="Irrigation Pump" 
+                isActive={false} 
+                onToggle={() => {}} 
+                icon={Droplets}
+              />
+              <ControlToggle 
+                label="Circulation Fans" 
+                isActive={true} 
+                onToggle={() => {}} 
+                icon={Wind}
+              />
+              
+              {/* Dimmer Slider */}
+              <div className="col-span-1 sm:col-span-2 mt-4 p-4 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="flex justify-between mb-2">
+                  <label className="text-sm font-bold text-stone-600">Light Intensity (PPFD Target: 900)</label>
+                  <span className="text-sm font-mono text-emerald-600">{dimmerLevel}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={dimmerLevel} 
+                  onChange={(e) => setDimmerLevel(e.target.value)}
+                  className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Feed Chart / Water Stats */}
+          <div className="bg-white rounded-xl shadow-sm border border-stone-200 flex flex-col">
+            <div className="p-4 border-b border-stone-100 bg-stone-50">
+              <h3 className="font-bold text-stone-700 flex items-center gap-2">
+                <Droplets size={18} /> Reservoir Status
+              </h3>
+            </div>
+            <div className="p-6 flex-1 flex flex-col justify-center gap-6">
+              
+              {/* PH Meter Visual */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-stone-500 uppercase font-bold">pH Level</p>
+                  <p className="text-3xl font-mono font-bold text-stone-800">{envData.ph}</p>
+                </div>
+                <div className="h-16 w-32 bg-gradient-to-r from-red-400 via-green-400 to-blue-400 rounded-lg relative opacity-80">
+                  <div 
+                    className="absolute top-0 bottom-0 w-1 bg-white border-x border-stone-600 shadow-xl"
+                    style={{ left: `${((envData.ph - 4) / 6) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+               {/* EC Meter Visual */}
+               <div className="flex items-center justify-between border-t border-stone-100 pt-6">
+                <div>
+                  <p className="text-xs text-stone-500 uppercase font-bold">E.C. (mS/cm)</p>
+                  <p className="text-3xl font-mono font-bold text-stone-800">{envData.ec}</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-xs text-stone-400 mb-1">Water Temp</p>
+                   <p className="text-xl font-bold text-blue-600">{envData.waterTemp}°F</p>
+                </div>
+              </div>
+              
+              <button className="w-full mt-auto py-3 rounded-lg bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
+                Calibrate Sensors
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Schedule / Logs */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-stone-700 text-lg">Upcoming Schedule</h3>
+            <button className="text-emerald-600 text-sm font-bold hover:underline">View Full Calendar</button>
+          </div>
+          <div className="space-y-4">
+             {[
+               { time: '06:00 AM', event: 'Lights On', type: 'auto' },
+               { time: '08:00 AM', event: 'Morning Irrigation (1200ml)', type: 'water' },
+               { time: '02:00 PM', event: 'Foliar Spray (IPM)', type: 'manual' },
+               { time: '06:00 PM', event: 'Lights Off', type: 'auto' },
+             ].map((item, idx) => (
+               <div key={idx} className="flex items-center gap-4 p-3 hover:bg-stone-50 rounded-lg transition-colors border-b border-stone-100 last:border-0">
+                 <div className="font-mono text-sm text-stone-500 w-20">{item.time}</div>
+                 <div className={`
+                    w-2 h-2 rounded-full 
+                    ${item.type === 'auto' ? 'bg-purple-400' : item.type === 'water' ? 'bg-blue-400' : 'bg-amber-400'}
+                 `}></div>
+                 <div className="font-medium text-stone-700 flex-1">{item.event}</div>
+                 <span className="text-xs px-2 py-1 bg-stone-100 text-stone-500 rounded uppercase tracking-wider">{item.type}</span>
+               </div>
+             ))}
+          </div>
+        </div>
+
+      </main>
+    </div>
+  );
+};
+
+export default CultivationDashboard;
