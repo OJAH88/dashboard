@@ -1,306 +1,1199 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Thermometer, 
-  Droplets, 
-  Sun, 
-  Wind, 
-  Activity, 
-  Calendar, 
-  AlertTriangle, 
-  Sprout, 
-  Settings,
-  Fan,
-  Timer
-} from 'lucide-react';
 
-const CultivationDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
-  // Simulated State for Environment
-  const [envData, setEnvData] = useState({
-    temp: 78.4,
-    humidity: 45,
-    co2: 1100,
-    vpd: 1.2,
-    ph: 6.2,
-    ec: 1.8,
-    waterTemp: 68
-  });
-
-  // Light Cycle State
-  const [lightsOn, setLightsOn] = useState(true);
-  const [dimmerLevel, setDimmerLevel] = useState(80);
-
-  // Update clock
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const MetricCard = ({ title, value, unit, icon: Icon, color, trend }) => (
-    <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold text-stone-800">{value}</span>
-          <span className="text-sm text-stone-400 font-medium">{unit}</span>
-        </div>
-        {trend && (
-          <span className={`text-xs font-medium ${trend > 0 ? 'text-green-600' : 'text-red-500'}`}>
-            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% from last hour
-          </span>
-        )}
-      </div>
-      <div className={`p-3 rounded-full ${color} bg-opacity-10 text-white`}>
-        <Icon size={24} className={color.replace('bg-', 'text-')} />
-      </div>
-    </div>
-  );
-
-  const ControlToggle = ({ label, isActive, onToggle, icon: Icon }) => (
-    <button 
-      onClick={onToggle}
-      className={`
-        flex items-center justify-between w-full p-4 rounded-xl border transition-all
-        ${isActive 
-          ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500' 
-          : 'bg-white border-stone-200 hover:border-emerald-300'
-        }
-      `}
-    >
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${isActive ? 'bg-emerald-500 text-white' : 'bg-stone-100 text-stone-400'}`}>
-          <Icon size={20} />
-        </div>
-        <span className={`font-medium ${isActive ? 'text-emerald-900' : 'text-stone-600'}`}>{label}</span>
-      </div>
-      <div className={`
-        w-10 h-6 rounded-full relative transition-colors duration-300
-        ${isActive ? 'bg-emerald-500' : 'bg-stone-300'}
-      `}>
-        <div className={`
-          absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300
-          ${isActive ? 'translate-x-4' : 'translate-x-0'}
-        `} />
-      </div>
-    </button>
-  );
-
-  return (
-    <div className="min-h-screen bg-stone-50 font-sans text-stone-800 pb-12">
-      {/* Sidebar / Navigation (Mobile simplified to top bar for this view) */}
-      <nav className="bg-stone-900 text-emerald-400 p-4 sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sprout size={28} />
-            <h1 className="text-xl font-bold text-white tracking-tight">Canna<span className="text-emerald-500">Grow</span>OS</h1>
-          </div>
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-400">
-            <button className="text-white hover:text-emerald-400 transition-colors">Dashboard</button>
-            <button className="hover:text-emerald-400 transition-colors">Grow Log</button>
-            <button className="hover:text-emerald-400 transition-colors">Genetics</button>
-            <button className="hover:text-emerald-400 transition-colors">Settings</button>
-          </div>
-          <div className="flex items-center gap-3 bg-stone-800 py-1 px-3 rounded-full border border-stone-700">
-            <div className={`w-2 h-2 rounded-full ${lightsOn ? 'bg-green-500 animate-pulse' : 'bg-stone-500'}`}></div>
-            <span className="text-xs font-mono text-stone-300">
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cultivation Intel Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Peer dependencies for Recharts -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/react-is@18.2.0/umd/react-is.production.min.js"></script>
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
-        {/* Alerts Section */}
-        {envData.vpd < 0.8 && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex items-start gap-3">
-            <AlertTriangle className="text-amber-500 shrink-0" size={20} />
-            <div>
-              <h3 className="font-bold text-amber-900 text-sm">Low VPD Warning</h3>
-              <p className="text-amber-700 text-sm mt-1">Vapor Pressure Deficit is currently {envData.vpd} kPa. Risk of mold increased. Check dehumidifiers.</p>
-            </div>
-          </div>
-        )}
+        html { font-size: 17.33px; } 
 
-        {/* Room Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-stone-800">Flower Room A</h2>
-            <p className="text-stone-500">Day 42 of Flower • Strain: Blue Dream</p>
-          </div>
-          <div className="flex gap-2">
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-              PHASE: FLOWERING
-            </span>
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
-              WEEK 6
-            </span>
-          </div>
-        </div>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            background-color: #020617; /* Deepest Midnight */
+            color: #f1f5f9;
+        }
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard 
-            title="Air Temp" 
-            value={`${envData.temp}°`} 
-            unit="F" 
-            icon={Thermometer} 
-            color="bg-red-500"
-            trend={1.2}
-          />
-          <MetricCard 
-            title="Humidity" 
-            value={`${envData.humidity}`} 
-            unit="%" 
-            icon={Droplets} 
-            color="bg-blue-500"
-            trend={-0.5}
-          />
-          <MetricCard 
-            title="VPD" 
-            value={envData.vpd} 
-            unit="kPa" 
-            icon={Wind} 
-            color="bg-purple-500"
-          />
-           <MetricCard 
-            title="CO2 PPM" 
-            value={envData.co2} 
-            unit="ppm" 
-            icon={Activity} 
-            color="bg-stone-500"
-          />
-        </div>
+        /* HARDCODE FONTS FOR SQUARESPACE COMPATIBILITY */
+        #root, #root *, h1, h2, h3, h4, h5, h6, p, span, div, table, th, td, button, input, select {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line {
+            stroke: #334155;
+            opacity: 0.25;
+        }
+        
+        .performance-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background-color: #0f172a; /* Slate 900 */
+            border: 1px solid #1e293b; /* Slate 800 */
+        }
+        .performance-card:hover { 
+            transform: translateY(-4px); 
+            border-color: #334155;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
 
-        {/* Main Control Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Environment Controls */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-            <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-              <h3 className="font-bold text-stone-700 flex items-center gap-2">
-                <Settings size={18} /> Environment Controllers
-              </h3>
-              <span className="text-xs text-stone-400">Auto-Mode Active</span>
-            </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <ControlToggle 
-                label="Main Lights (LED)" 
-                isActive={lightsOn} 
-                onToggle={() => setLightsOn(!lightsOn)} 
-                icon={Sun}
-              />
-              <ControlToggle 
-                label="Exhaust Fans" 
-                isActive={true} 
-                onToggle={() => {}} 
-                icon={Fan}
-              />
-              <ControlToggle 
-                label="Irrigation Pump" 
-                isActive={false} 
-                onToggle={() => {}} 
-                icon={Droplets}
-              />
-              <ControlToggle 
-                label="Circulation Fans" 
-                isActive={true} 
-                onToggle={() => {}} 
-                icon={Wind}
-              />
-              
-              {/* Dimmer Slider */}
-              <div className="col-span-1 sm:col-span-2 mt-4 p-4 bg-stone-50 rounded-xl border border-stone-100">
-                <div className="flex justify-between mb-2">
-                  <label className="text-sm font-bold text-stone-600">Light Intensity (PPFD Target: 900)</label>
-                  <span className="text-sm font-mono text-emerald-600">{dimmerLevel}%</span>
+        .text-slate-400 { color: #94a3b8 !important; } 
+        .text-slate-500 { color: #64748b !important; }
+        
+        input, select {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+        }
+
+        .recharts-default-tooltip {
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        .text-outline {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+        
+        /* Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px #064e3b;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const SYSTEM_CONFIG = {
+            REAL_DATA_LINK: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjdT4a3JQRupgfUPALvEidouA-90MjaKNMjXm0TSA_1qJDXD41s186RSIP3jXKlvVjKNvy62E3a2mA/pub?gid=1310781873&single=true&output=csv",
+            SAMPLE_DATA_LINK: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPdEuZGT4Ipcf2HWXKoIti9IJyh3zR6CrdcW6O-i04WOiuGhHD0YAFlU5JN8XhYWNzcDBskCNX72M/pub?gid=731339314&single=true&output=csv",
+            ENTRY_FORM_LINK: "https://forms.gle/ojBK6FsFKCnrp6m46" 
+        };
+
+        const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
+        const KG_TO_LB = 2.20462;
+        
+        const TERPENE_PROFILES = [
+            "Gas / Diesel / Fuel", "Candy / Sweet", "Earthy / Musky", "Citrus (Lemon, Lime, Orange)",
+            "Berry (Blueberry, Strawberry, Raspberry)", "Tropical (Mango, Pineapple, Papaya)",
+            "Pine / Woodsy", "Skunk / Funky", "Cheese / Savory", "GMO (Garlic, Mushroom, Onion)",
+            "Floral (Lavender, Rose)", "Spicy / Peppery", "Dessert / Creamy / Doughy",
+            "Sour / Tart", "Minty / Menthol", "Chemical / Cleaning Solvent",
+            "Fruit / Rotten Fruit", "Nutty"
+        ];
+        
+        const SHI_TYPES = ["Sativa", "Sativa Hybrid", "Hybrid", "Indica Hybrid", "Indica"];
+
+        const { useState, useMemo, useEffect, useRef } = React;
+        const { 
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+            Cell, LineChart, Line, Legend, AreaChart, Area,
+            ReferenceLine, ComposedChart, ScatterChart, Scatter, PieChart, Pie
+        } = Recharts;
+
+        // Custom Hook for LocalStorage Persistence
+        const usePersistentState = (key, defaultValue) => {
+            const [state, setState] = useState(() => {
+                try {
+                    const saved = localStorage.getItem(key);
+                    return saved ? JSON.parse(saved) : defaultValue;
+                } catch (e) {
+                    console.error("Error loading state", key, e);
+                    return defaultValue;
+                }
+            });
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(state));
+                } catch (e) {
+                    console.error("Error saving state", key, e);
+                }
+            }, [key, state]);
+
+            return [state, setState];
+        };
+
+        const Icons = {
+            Globe: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Zap: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            Scale: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>,
+            Award: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>,
+            Dollar: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+            Refresh: ({ animate }) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={animate ? "animate-spin" : ""}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>,
+            X: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            EyeOff: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>,
+            Eye: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+            Coins: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h1v4"/><path d="M17 12h1v4"/></svg>,
+            Crown: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
+            List: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>,
+            Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="overflow-visible"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+            Trophy: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+            Target: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+            Calculator: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>,
+            TrendingUp: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+            Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+            Info: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+            ArrowUp: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+            ArrowDown: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
+            Star: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        };
+
+        const MultiSelect = ({ label, options, selected, onChange }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const wrapperRef = useRef(null);
+            useEffect(() => {
+                const handleClickOutside = (event) => { if (wrapperRef.current && !wrapperRef.current.contains(event.target)) setIsOpen(false); };
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, []);
+            return (
+                <div className="relative flex-1 bg-slate-100 rounded-xl border border-slate-200 shadow-inner px-3 py-1.5 flex items-center gap-2 min-w-[120px]" ref={wrapperRef}>
+                    <span className="text-[10px] font-black text-slate-900 uppercase whitespace-nowrap">{label}:</span>
+                    <button onClick={() => setIsOpen(!isOpen)} className="flex-1 bg-white border border-slate-300 text-slate-900 text-[12px] font-black px-2 py-0.5 rounded-md uppercase flex items-center justify-between shadow-sm hover:border-emerald-500 transition-all outline-none">
+                        <span className="truncate mr-1.5">{selected === 'All' ? 'All' : selected}</span>
+                        <Icons.Chevron />
+                    </button>
+                    {isOpen && (
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-64 overflow-y-auto custom-scrollbar p-1">
+                            {options.map(opt => (
+                                <div key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`px-2 py-1.5 text-[10px] font-bold uppercase cursor-pointer rounded hover:bg-slate-100 ${selected === opt ? 'text-emerald-600 bg-emerald-50' : 'text-slate-900'}`}>
+                                    {opt}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={dimmerLevel} 
-                  onChange={(e) => setDimmerLevel(e.target.value)}
-                  className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
+            );
+        };
 
-          {/* Feed Chart / Water Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-stone-200 flex flex-col">
-            <div className="p-4 border-b border-stone-100 bg-stone-50">
-              <h3 className="font-bold text-stone-700 flex items-center gap-2">
-                <Droplets size={18} /> Reservoir Status
-              </h3>
-            </div>
-            <div className="p-6 flex-1 flex flex-col justify-center gap-6">
-              
-              {/* PH Meter Visual */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-stone-500 uppercase font-bold">pH Level</p>
-                  <p className="text-3xl font-mono font-bold text-stone-800">{envData.ph}</p>
+        const SortableTable = ({ columns, data, showTotals = true }) => {
+            const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+
+            const sortedData = useMemo(() => {
+                let sortableItems = [...data];
+                if (sortConfig.key !== null) {
+                    sortableItems.sort((a, b) => {
+                        let aVal = a[sortConfig.key];
+                        let bVal = b[sortConfig.key];
+                        const clean = (val) => parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(clean(aVal)) && !isNaN(clean(bVal))) { aVal = clean(aVal); bVal = clean(bVal); }
+                        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                }
+                return sortableItems;
+            }, [data, sortConfig]);
+
+            const totals = useMemo(() => {
+                if (!showTotals) return null;
+                const t = {};
+                columns.forEach(col => {
+                    if (col.isNumeric) {
+                        const sum = data.reduce((acc, row) => {
+                            const val = parseFloat(String(row[col.key]).replace(/[^0-9.-]/g, ''));
+                            return acc + (isNaN(val) ? 0 : val);
+                        }, 0);
+                        t[col.key] = col.format ? col.format(sum.toFixed(col.decimals || 1)) : sum.toFixed(col.decimals || 1);
+                    } else if (col.key === columns[0].key) {
+                        t[col.key] = "TOTALS";
+                    }
+                });
+                return t;
+            }, [data, columns, showTotals]);
+
+            const requestSort = (key) => {
+                let direction = 'desc';
+                if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
+                setSortConfig({ key, direction });
+            };
+
+            return (
+                <div className="overflow-x-auto custom-scrollbar px-2 pb-4">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800">
+                                {columns.map((col) => (
+                                    <th key={col.key} onClick={() => requestSort(col.key)} className={`pb-3 px-4 cursor-pointer hover:text-emerald-500 transition-colors ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                                        <div className={`flex items-center gap-1 ${col.align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                                            {col.label}
+                                            {sortConfig.key === col.key && (sortConfig.direction === 'asc' ? <Icons.ArrowUp /> : <Icons.ArrowDown />)}
+                                        </div>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="text-[13px] font-bold text-slate-300">
+                            {sortedData.map((row, idx) => (
+                                <tr key={idx} className="border-b border-slate-800/30 last:border-0 hover:bg-slate-800/10">
+                                    {columns.map((col) => (
+                                        <td key={col.key} className={`py-3 px-4 ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.color ? col.color(row) : ''}`}>
+                                            {col.format ? col.format(row[col.key], row) : row[col.key]}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                            {totals && (
+                                <tr className="border-t-2 border-slate-700/50 bg-slate-800/20">
+                                    {columns.map((col) => (
+                                        <td key={col.key} className={`py-3 px-4 font-black text-white ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.color ? col.color(totals) : ''}`}>
+                                            {totals[col.key] || ''}
+                                        </td>
+                                    ))}
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-                <div className="h-16 w-32 bg-gradient-to-r from-red-400 via-green-400 to-blue-400 rounded-lg relative opacity-80">
-                  <div 
-                    className="absolute top-0 bottom-0 w-1 bg-white border-x border-stone-600 shadow-xl"
-                    style={{ left: `${((envData.ph - 4) / 6) * 100}%` }}
-                  ></div>
+            );
+        };
+
+        const App = () => {
+            const [data, setData] = useState([]);
+            const [dataSource, setDataSource] = useState('live'); 
+            const [isLoading, setIsLoading] = useState(false);
+            const [lastSync, setLastSync] = useState('');
+            const [matrixMetric, setMatrixMetric] = useState('gpl');
+            const [leaderboardSort, setLeaderboardSort] = useState('gpl');
+            const [leaderboardTime, setLeaderboardTime] = useState('all'); 
+            const [mixChartView, setMixChartView] = useState('ratio');
+            const [showEntryModal, setShowEntryModal] = useState(false);
+            const [showSettingsModal, setShowSettingsModal] = useState(false);
+            const [revenueMode, setRevenueMode] = useState('rpl'); 
+            const [expandedCycle, setExpandedCycle] = useState(null);
+            
+            // --- PERSISTENT STATE ---
+            const [prices, setPrices] = usePersistentState('ci_prices', { flowerA: 3.97, smallsB: 2.20, trimC: 1.32, bho: 15.00, rosin: 35.00, cart1g: 18.00, disp1g: 22.00, rosinCart05: 25.00, preroll: 4.00 });
+            const [strainPrices, setStrainPrices] = usePersistentState('ci_strain_prices', {});
+            const [strainProfiles, setStrainProfiles] = usePersistentState('ci_strain_profiles', {});
+            const [strainMaxPlants, setStrainMaxPlants] = usePersistentState('ci_strain_limits', {}); 
+            const [expenses, setExpenses] = usePersistentState('ci_expenses', [{ id: 1, name: 'Rent', val: 5000 }, { id: 2, name: 'Electric', val: 3500 }, { id: 3, name: 'Labor', val: 8000 }, { id: 4, name: 'Nutrients', val: 1500 }]);
+            const [roomConfigs, setRoomConfigs] = usePersistentState('ci_room_configs', [
+                {id: 1, name: 'Room 1', lights: 24, plants: 120}, {id: 2, name: 'Room 2', lights: 24, plants: 120}, 
+                {id: 3, name: 'Room 3', lights: 20, plants: 100}, {id: 4, name: 'Room 4', lights: 20, plants: 100}
+            ]);
+            const [totalActiveLights, setTotalActiveLights] = usePersistentState('ci_active_lights', 120); 
+            const [targetQuality, setTargetQuality] = usePersistentState('ci_target_quality', 70);
+            const [targetGpl, setTargetGpl] = usePersistentState('ci_target_gpl', 100);
+            const [targetRevPerLight, setTargetRevPerLight] = usePersistentState('ci_target_rpl', 400);
+
+            // Settings UI State
+            const [priceUnit, setPriceUnit] = useState('gram'); 
+            const [inputUnit, setInputUnit] = useState('gram');
+            const [strainInputUnit, setStrainInputUnit] = useState('gram');
+            const [defaultMaxPlants, setDefaultMaxPlants] = useState(250); 
+
+            // Forecast & Optimizer State
+            const [forecastStrain, setForecastStrain] = useState('');
+            const [forecastLights, setForecastLights] = useState(24);
+            const [optimizeCount, setOptimizeCount] = useState(5);
+            const [forecastCycles, setForecastCycles] = useState([]); 
+            const [optimizeWeight, setOptimizeWeight] = useState(50); 
+            const [terpeneFilter, setTerpeneFilter] = useState('All');
+            const [maxPlantsPerStrain, setMaxPlantsPerStrain] = useState(50);
+            
+            // New Target Mix for Optimizer
+            const [terpTargets, setTerpTargets] = useState({
+                 "Gas / Diesel / Fuel": 0,
+                 "Candy / Sweet": 0,
+                 "Fruit / Rotten Fruit": 0,
+                 "Earthy / Musky": 0
+            });
+
+            // Consistency Matrix State
+            const [consistencyMetric, setConsistencyMetric] = useState('yield'); 
+            const [minBatchCount, setMinBatchCount] = useState(2);
+
+            const [selectedCycle, setSelectedCycle] = useState('All');
+            const [selectedRoom, setSelectedRoom] = useState('All');
+            const [selectedStrain, setSelectedStrain] = useState('All');
+
+            const [compMode, setCompMode] = useState('cycle'); 
+            const [compSelections, setCompSelections] = useState([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }, { id: 3, cycle: '', room: '' }]);
+
+            // --- COMPUTED OPEX PER LIGHT ---
+            const computedOpexPerLight = useMemo(() => {
+                const totalFixed = expenses.reduce((acc, curr) => acc + curr.val, 0);
+                return totalActiveLights > 0 ? (totalFixed / totalActiveLights).toFixed(2) : 0;
+            }, [expenses, totalActiveLights]);
+
+            // --- HELPERS ---
+            const addComparison = () => { if (compSelections.length < 9) setCompSelections([...compSelections, { id: Date.now(), cycle: '', room: '' }]); };
+            const removeComparison = (id) => { if (compSelections.length > 1) setCompSelections(compSelections.filter(c => c.id !== id)); };
+            const updateComparison = (id, field, value) => { setCompSelections(compSelections.map(c => c.id === id ? { ...c, [field]: value } : c)); };
+            const addExpense = () => setExpenses([...expenses, { id: Date.now(), name: 'New Expense', val: 0 }]);
+            const updateExpense = (id, field, value) => setExpenses(expenses.map(e => e.id === id ? { ...e, [field]: value } : e));
+            const removeExpense = (id) => setExpenses(expenses.filter(e => e.id !== id));
+            
+            const addRoomConfig = () => setRoomConfigs([...roomConfigs, { id: Date.now(), name: 'New Room', lights: 24, plants: 100 }]);
+            const updateRoomConfig = (id, field, value) => setRoomConfigs(roomConfigs.map(r => r.id === id ? { ...r, [field]: value } : r));
+            const removeRoomConfig = (id) => setRoomConfigs(roomConfigs.filter(r => r.id !== id));
+
+            const updateStrainPrice = (strain, price) => setStrainPrices({ ...strainPrices, [strain]: parseFloat(price) });
+            const updateStrainProfile = (strain, profile) => setStrainProfiles({ ...strainProfiles, [strain]: profile });
+            const updateStrainLimit = (strain, limit) => setStrainMaxPlants({ ...strainMaxPlants, [strain]: parseInt(limit) });
+
+            const parseCSV = (text) => { const lines = text.split(/\r?\n/).filter(line => line.trim()); if (lines.length < 2) return []; const clean = (val) => (val || "").replace(/^"|"$/g, '').trim(); const splitLine = (line) => { const result = []; let current = ''; let inQuotes = false; for (let i = 0; i < line.length; i++) { const char = line[i]; if (char === '"') inQuotes = !inQuotes; else if (char === ',' && !inQuotes) { result.push(clean(current)); current = ''; } else { current += char; } } result.push(clean(current)); return result; }; const headers = splitLine(lines[0]); return headers.length > 0 ? lines.slice(1).map(line => { const values = splitLine(line); const obj = {}; headers.forEach((h, i) => { obj[h] = values[i]; }); return mapCsvToData(obj); }).filter(d => d["Cycle ID"] !== "N/A" && d["Strain Name"] !== "Unknown" && d["Total Yield (G)"] > 0) : []; };
+            const mapCsvToData = (row) => { 
+                const num = (val) => { const p = parseFloat(String(val).replace(/[^0-9.]/g, '')); return isNaN(p) ? 0 : p; }; 
+                const a = num(row["Flower (A)"] || row["Flower A"] || row["Premium"]); 
+                const b = num(row["Smalls (B)"] || row["Smalls B"] || row["Smalls"]); 
+                const c = num(row["Trim (C)"] || row["Trim C"] || row["Trim"]); 
+                const lights = num(row["Lights"] || row["Light Count"]) || 24; 
+                const net = a + b + c; 
+                
+                // Enhanced Profile Detection
+                const profile = row["Strain Profile"] || row["Terpene Profile"] || row["Terpenes"] || row["Profile"] || "Unknown";
+                const shi = row["S/H/I"] || row["Type"] || "Hybrid";
+
+                return { 
+                    "Cycle ID": row["Cycle ID"] || "N/A", "Room ID": row["Room ID"] || "N/A", "Strain Name": row["Strain Name"] || "Unknown", 
+                    "Flower (A)": a, "Smalls (B)": b, "Trim (C)": c, "Total Yield (G)": net, "Lights": lights, 
+                    "Grams per Light": net > 0 ? Number((net / lights).toFixed(2)) : 0,
+                    terpene: profile, shi: shi
+                }; 
+            };
+            const autoFetch = async (url) => { setIsLoading(true); try { const finalUrl = `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now()}`; const response = await fetch(finalUrl); const text = await response.text(); const parsed = parseCSV(text); if (parsed.length > 0) { setData(parsed); setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); } } catch (e) { console.error(e); } finally { setIsLoading(false); } };
+            const fetchLink = useMemo(() => dataSource === 'live' ? SYSTEM_CONFIG.REAL_DATA_LINK : SYSTEM_CONFIG.SAMPLE_DATA_LINK, [dataSource]);
+            useEffect(() => { autoFetch(fetchLink); }, [fetchLink]);
+            const cycleOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Cycle ID"])))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}))], [data]);
+            const roomOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Room ID"])))].sort()], [data]);
+            const strainOptions = useMemo(() => ['All', ...[...new Set(data.map(d => String(d["Strain Name"])))].sort()], [data]);
+            const filteredData = useMemo(() => { return data.filter(item => { const cMatch = selectedCycle === 'All' || item["Cycle ID"] === selectedCycle; const rMatch = selectedRoom === 'All' || item["Room ID"] === selectedRoom; const sMatch = selectedStrain === 'All' || item["Strain Name"] === selectedStrain; return cMatch && rMatch && sMatch; }); }, [data, selectedCycle, selectedRoom, selectedStrain]);
+
+            // --- STATS ---
+            const stats = useMemo(() => {
+                let totalRev = 0, totalLights = 0, sumA = 0, sumB = 0, sumC = 0, sumNet = 0;
+                filteredData.forEach(d => {
+                    sumA += d["Flower (A)"]; sumB += d["Smalls (B)"]; sumC += d["Trim (C)"]; sumNet += d["Total Yield (G)"]; totalLights += d["Lights"];
+                    const strainPrice = strainPrices[d["Strain Name"]] || prices.flowerA;
+                    totalRev += (d["Flower (A)"] * strainPrice) + (d["Smalls (B)"] * prices.smallsB) + (d["Trim (C)"] * prices.trimC);
+                });
+                const totalOpex = totalLights * parseFloat(computedOpexPerLight);
+                const netProfit = totalRev - totalOpex;
+                const profitMargin = totalRev > 0 ? (netProfit / totalRev) * 100 : 0;
+                const lb = (v) => ((v / 1000) * KG_TO_LB).toFixed(1);
+                const g = (v) => Math.round(v).toLocaleString();
+                
+                const safeFmt = (val) => val ? String(val) : "0";
+
+                return {
+                    totalLb: lb(sumNet), totalG: g(sumNet), flowerA_Lb: lb(sumA), flowerA_G: g(sumA), smallsB_Lb: lb(sumB), smallsB_G: g(sumB), trimC_Lb: lb(sumC), trimC_G: g(sumC),
+                    gpl: totalLights > 0 ? (sumNet / totalLights).toFixed(1) : "0", flowerGpl: totalLights > 0 ? (sumA / totalLights).toFixed(1) : "0",
+                    rpl: totalLights > 0 ? (totalRev / totalLights).toFixed(2) : "0",
+                    revA: Math.round(sumA * prices.flowerA).toLocaleString(),
+                    revB: Math.round(sumB * prices.smallsB).toLocaleString(), 
+                    revC: Math.round(sumC * prices.trimC).toLocaleString(),
+                    quality: sumNet > 0 ? ((sumA / sumNet) * 100).toFixed(1) : "0",
+                    revenue: Math.round(totalRev).toLocaleString(), 
+                    netProfit: Math.round(netProfit).toLocaleString(), 
+                    profitMargin: profitMargin.toFixed(1), 
+                    opexTotal: Math.round(totalOpex).toLocaleString()
+                };
+            }, [filteredData, prices, strainPrices, computedOpexPerLight]);
+
+            // --- DATA TRANSFORMATIONS ---
+            const scatterData = useMemo(() => filteredData.map((d, i) => { const net = d["Total Yield (G)"] || 0; const flr = d["Flower (A)"] || 0; return { x: d["Grams per Light"] || 0, y: net > 0 ? Number(((flr / net) * 100).toFixed(1)) : 0, lpl: (d["Grams per Light"] / 453.592).toFixed(2), name: d["Strain Name"], cycle: d["Cycle ID"], room: d["Room ID"], id: i }; }), [filteredData]);
+            
+            const roomBenchmark = useMemo(() => {
+                const map = {};
+                // Filter logic for time (last 5 cycles)
+                let workingData = [...data];
+                if (leaderboardTime === 'recent') {
+                    const uniqueCycles = [...new Set(data.map(d => d["Cycle ID"]))].sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).reverse().slice(0, 5);
+                    workingData = workingData.filter(d => uniqueCycles.includes(d["Cycle ID"]));
+                }
+
+                workingData.forEach(d => {
+                    const r = d["Room ID"];
+                    if (!map[r]) map[r] = { name: r, gplSum: 0, premiumSum: 0, usableSum: 0, revSum: 0, lightsSum: 0, count: 0 };
+                    map[r].gplSum += d["Grams per Light"]; 
+                    map[r].premiumSum += d["Flower (A)"]; 
+                    map[r].usableSum += d["Total Yield (G)"];
+                    map[r].lightsSum += d["Lights"];
+                    
+                    const strainPrice = strainPrices[d["Strain Name"]] || prices.flowerA;
+                    const batchRev = (d["Flower (A)"] * strainPrice) + (d["Smalls (B)"] * prices.smallsB) + (d["Trim (C)"] * prices.trimC);
+                    map[r].revSum += batchRev;
+                    map[r].count += 1;
+                });
+
+                return Object.values(map).map(m => ({ 
+                    name: m.name, 
+                    gpl: Number((m.gplSum / m.count).toFixed(2)),
+                    yield: Number(((m.usableSum / 1000) * KG_TO_LB).toFixed(1)),
+                    revPerLight: m.lightsSum > 0 ? Number((m.revSum / m.lightsSum).toFixed(2)) : 0,
+                    mix: m.usableSum > 0 ? Number(((m.premiumSum / m.usableSum) * 100).toFixed(1)) : 0 
+                })).map(item => ({
+                    ...item, 
+                    sortVal: leaderboardSort === 'mix' ? item.mix : leaderboardSort === 'yield' ? item.yield : leaderboardSort === 'rpl' ? item.revPerLight : item.gpl
+                })).sort((a,b) => b.sortVal - a.sortVal);
+            }, [data, leaderboardSort, leaderboardTime, prices, strainPrices]);
+            
+            const strainRoomMatrix = useMemo(() => {
+                const strains = selectedStrain === 'All' ? strainOptions.filter(s => s !== 'All') : [selectedStrain];
+                const rooms = roomOptions.filter(r => r !== 'All');
+                return strains.map(s => {
+                    const row = { strain: s, maxVal: 0 };
+                    rooms.forEach(r => {
+                        const matches = filteredData.filter(d => d["Strain Name"] === s && d["Room ID"] === r);
+                        if (matches.length > 0) {
+                            const val = matrixMetric === 'gpl' ? Number((matches.reduce((acc, m) => acc + m["Grams per Light"], 0) / matches.length).toFixed(1)) : Number(((matches.reduce((acc, m) => acc + m["Total Yield (G)"], 0) / 1000) * KG_TO_LB).toFixed(1));
+                            row[r] = val;
+                            if (val > row.maxVal) row.maxVal = val;
+                        } else row[r] = '-';
+                    });
+                    return row;
+                });
+            }, [filteredData, roomOptions, strainOptions, selectedStrain, matrixMetric]);
+
+            const cycleBreakdown = useMemo(() => {
+                const groups = {};
+                filteredData.forEach(d => {
+                    const cid = d["Cycle ID"];
+                    if (!groups[cid]) groups[cid] = { id: cid, rooms: [], totalYieldG: 0, totalLights: 0, totalPremiumG: 0, strains: {}, roomsAgg: {} };
+                    const rowData = { id: d["Room ID"], strain: d["Strain Name"], yieldG: d["Total Yield (G)"], premiumG: d["Flower (A)"], lights: d["Lights"], gpl: d["Grams per Light"] };
+                    groups[cid].rooms.push(rowData);
+                    groups[cid].totalYieldG += d["Total Yield (G)"]; groups[cid].totalLights += d["Lights"]; groups[cid].totalPremiumG += d["Flower (A)"];
+                    const s = d["Strain Name"];
+                    if (!groups[cid].strains[s]) groups[cid].strains[s] = { name: s, yieldG: 0, premiumG: 0, lights: 0 };
+                    groups[cid].strains[s].yieldG += d["Total Yield (G)"]; groups[cid].strains[s].premiumG += d["Flower (A)"]; groups[cid].strains[s].lights += d["Lights"];
+                    const r = d["Room ID"];
+                    if (!groups[cid].roomsAgg[r]) groups[cid].roomsAgg[r] = { name: r, yieldG: 0, premiumG: 0, lights: 0, strains: new Set() };
+                    groups[cid].roomsAgg[r].yieldG += d["Total Yield (G)"]; groups[cid].roomsAgg[r].premiumG += d["Flower (A)"]; groups[cid].roomsAgg[r].lights += d["Lights"]; groups[cid].roomsAgg[r].strains.add(d["Strain Name"]);
+                });
+                return Object.values(groups).map(g => {
+                    const yieldLb = (g.totalYieldG / 1000) * KG_TO_LB; const flowerLb = (g.totalPremiumG / 1000) * KG_TO_LB;
+                    return {
+                        id: g.id, yieldLb: yieldLb.toFixed(1), flowerLb: flowerLb.toFixed(1), gpl: g.totalLights > 0 ? (g.totalYieldG / g.totalLights).toFixed(1) : 0, quality: g.totalYieldG > 0 ? ((g.totalPremiumG / g.totalYieldG) * 100).toFixed(1) : 0,
+                        rooms: g.rooms.map(r => ({ id: r.id, strain: r.strain, yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1), flowerLb: ((r.premiumG / 1000) * KG_TO_LB).toFixed(1), gpl: r.gpl.toFixed(1), quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0 })).sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})),
+                        strainsAgg: Object.values(g.strains).map(s => ({ name: s.name, yieldLb: ((s.yieldG / 1000) * KG_TO_LB).toFixed(1), flowerLb: ((s.premiumG / 1000) * KG_TO_LB).toFixed(1), gpl: s.lights > 0 ? (s.yieldG / s.lights).toFixed(1) : 0, quality: s.yieldG > 0 ? ((s.premiumG / s.yieldG) * 100).toFixed(1) : 0 })),
+                        roomsAgg: Object.values(g.roomsAgg).map(r => ({ name: r.name, yieldLb: ((r.yieldG / 1000) * KG_TO_LB).toFixed(1), flowerLb: ((r.premiumG / 1000) * KG_TO_LB).toFixed(1), strains: Array.from(r.strains).join(', '), gpl: r.lights > 0 ? (r.yieldG / r.lights).toFixed(1) : 0, quality: r.yieldG > 0 ? ((r.premiumG / r.yieldG) * 100).toFixed(1) : 0 }))
+                    };
+                }).sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})); 
+            }, [filteredData]);
+
+            // --- COMPARATOR ---
+            const getCompStats = (selection) => {
+                let subset = [];
+                if (!selection.cycle && !selection.room) return null;
+                if (compMode === 'cycle') { if (!selection.cycle) return null; subset = data.filter(d => d["Cycle ID"] === selection.cycle); }
+                else if (compMode === 'room') { if (!selection.room) return null; subset = data.filter(d => d["Room ID"] === selection.room); }
+                else if (compMode === 'batch') { if (!selection.cycle || !selection.room) return null; subset = data.filter(d => d["Cycle ID"] === selection.cycle && d["Room ID"] === selection.room); }
+                if (subset.length === 0) return null;
+                const lights = subset.reduce((acc, d) => acc + d["Lights"], 0) || 1;
+                const totalYield = subset.reduce((acc, d) => acc + d["Total Yield (G)"], 0);
+                const premium = subset.reduce((acc, d) => acc + d["Flower (A)"], 0);
+                const totalRev = subset.reduce((acc, d) => (d["Flower (A)"] * (strainPrices[d["Strain Name"]] || prices.flowerA)) + (d["Smalls (B)"] * prices.smallsB) + (d["Trim (C)"] * prices.trimC), 0);
+                return {
+                    yieldLb: ((totalYield / 1000) * KG_TO_LB).toFixed(1), flowerLb: ((premium / 1000) * KG_TO_LB).toFixed(1), gpl: (totalYield / lights).toFixed(1),
+                    quality: totalYield > 0 ? ((premium / totalYield) * 100).toFixed(1) : "0", revenue: totalRev, rpl: (totalRev / lights).toFixed(2)
+                };
+            };
+            const computedComparisons = useMemo(() => compSelections.map(s => ({ ...s, stats: getCompStats(s) })), [compSelections, compMode, data, prices, strainPrices]);
+            const compMaxValues = useMemo(() => {
+                const stats = computedComparisons.filter(c => c.stats).map(c => c.stats);
+                if (stats.length < 2) return {};
+                return { gpl: Math.max(...stats.map(s => parseFloat(s.gpl))), flowerLb: Math.max(...stats.map(s => parseFloat(s.flowerLb))), quality: Math.max(...stats.map(s => parseFloat(s.quality))), rpl: Math.max(...stats.map(s => parseFloat(s.rpl))) };
+            }, [computedComparisons]);
+
+            // --- FORECAST & OPTIMIZER (PLANT BASED LOGIC + TARGET MIX) ---
+            const forecastResult = useMemo(() => {
+                if (!forecastStrain || !forecastLights) return null;
+                const history = data.filter(d => d["Strain Name"] === forecastStrain && (forecastCycles.length === 0 || forecastCycles.includes(d["Cycle ID"])));
+                if (history.length === 0) return null;
+                const gpls = history.map(d => d["Grams per Light"]);
+                const avgGpl = gpls.reduce((a,b) => a+b, 0) / gpls.length;
+                const squareDiffs = gpls.map(v => Math.pow(v - avgGpl, 2));
+                const stdDev = Math.sqrt(squareDiffs.reduce((a,b) => a+b, 0) / gpls.length);
+                const calcRevenue = (gpl) => { const totalG = gpl * forecastLights; const price = strainPrices[forecastStrain] || prices.flowerA; return (totalG * 0.7 * price) + (totalG * 0.2 * prices.smallsB) + (totalG * 0.1 * prices.trimC); };
+                return { avgGpl: avgGpl.toFixed(0), lowWt: (((avgGpl-stdDev)*forecastLights/1000)*KG_TO_LB).toFixed(1), highWt: (((avgGpl+stdDev)*forecastLights/1000)*KG_TO_LB).toFixed(1), estRevenue: Math.round(calcRevenue(avgGpl)).toLocaleString() };
+            }, [forecastStrain, forecastLights, forecastCycles, data, prices, strainPrices]);
+
+            const optimizerPlan = useMemo(() => {
+                // 1. Calculate Strain Stats
+                const strainStats = {};
+                data.forEach(d => {
+                    const s = d["Strain Name"];
+                    // Priority: User Override > CSV > Mock
+                    const profile = strainProfiles[s] || d.terpene || "Unknown";
+                    if (!terpeneFilter || terpeneFilter === 'All' || profile === terpeneFilter) {
+                        if (!strainStats[s]) strainStats[s] = { name: s, count: 0, totalGpl: 0, totalA: 0, totalG: 0, terpene: profile };
+                        strainStats[s].count++; strainStats[s].totalGpl += d["Grams per Light"]; strainStats[s].totalA += d["Flower (A)"]; strainStats[s].totalG += d["Total Yield (G)"];
+                    }
+                });
+
+                // 2. Score Strains based on Weight + Target Mix
+                // Calculate current allocated mix to perform "Smart Balancing"
+                // Simple version: Boost score of profiles with high target %
+                const scoredStrains = Object.values(strainStats).map(s => {
+                    const avgGpl = s.totalGpl / s.count; const avgRatioA = s.totalA / s.totalG; const price = strainPrices[s.name] || prices.flowerA;
+                    const estRevPerLight = (avgGpl * avgRatioA * price) + (avgGpl * (1-avgRatioA) * prices.smallsB);
+                    const estProfit = estRevPerLight - parseFloat(computedOpexPerLight);
+                    
+                    const normProfit = estProfit / 1000; const normYield = avgGpl / 150; 
+                    const weightP = optimizeWeight / 100; const weightY = (100 - optimizeWeight) / 100;
+                    
+                    // Target Boost
+                    const targetPct = terpTargets[s.terpene] || 0;
+                    const boost = targetPct / 10; // Simple linear boost
+
+                    const score = (normProfit * weightP) + (normYield * weightY) + boost;
+                    return { ...s, avgGpl, estProfit, score };
+                }).sort((a,b) => b.score - a.score);
+
+                // 3. Allocate Rooms (Plant-Based Splitting Logic)
+                const plan = [];
+                const strainUsage = {}; // Track plants assigned per strain
+                
+                const availableRooms = JSON.parse(JSON.stringify(roomConfigs));
+
+                availableRooms.forEach(room => {
+                    let plantsToFill = room.plants; // Use Plants Capacity
+
+                    // Keep filling room until empty
+                    while (plantsToFill > 0) {
+                         // Find best strain that hasn't exceeded max cap
+                        const bestStrain = scoredStrains.find(s => {
+                            const currentUsage = strainUsage[s.name] || 0;
+                            const specificLimit = strainMaxPlants[s.name] || defaultMaxPlants; // Use specific limit or fallback
+                            return currentUsage < specificLimit;
+                        });
+
+                        if (!bestStrain) {
+                            plan.push({
+                                room: room.name,
+                                plants: plantsToFill,
+                                lights: (plantsToFill / room.plants) * room.lights, // Est lights
+                                strain: 'No Valid Strain (Caps Reached)',
+                                estProfit: 0,
+                                estYield: 0,
+                                terpene: '-'
+                            });
+                            plantsToFill = 0;
+                            break;
+                        }
+
+                        // Determine how many plants we can give to this strain in this room
+                        const currentUsage = strainUsage[bestStrain.name] || 0;
+                        const specificLimit = strainMaxPlants[bestStrain.name] || defaultMaxPlants;
+                        const remainingCap = specificLimit - currentUsage;
+                        const allocation = Math.min(plantsToFill, remainingCap);
+                        
+                        // Derived Lights for this chunk (proportional)
+                        const allocatedLights = (allocation / room.plants) * room.lights;
+
+                        plan.push({
+                            room: room.name,
+                            plants: allocation,
+                            lights: allocatedLights.toFixed(1),
+                            strain: bestStrain.name,
+                            estProfit: (bestStrain.estProfit * allocatedLights).toFixed(0),
+                            estYield: ((bestStrain.avgGpl * allocatedLights / 1000) * KG_TO_LB).toFixed(1),
+                            terpene: bestStrain.terpene
+                        });
+
+                        // Update counters
+                        strainUsage[bestStrain.name] = currentUsage + allocation;
+                        plantsToFill -= allocation;
+                    }
+                });
+                
+                return plan;
+            }, [data, prices, strainPrices, strainProfiles, strainMaxPlants, computedOpexPerLight, optimizeWeight, terpeneFilter, roomConfigs, defaultMaxPlants, terpTargets]);
+
+            // --- CONSISTENCY ---
+            const consistencyData = useMemo(() => {
+                const map = {};
+                data.forEach(d => { const s = d["Strain Name"]; if (!map[s]) map[s] = { name: s, vals: [] }; map[s].vals.push(consistencyMetric === 'yield' ? d["Grams per Light"] : (d["Total Yield (G)"]>0 ? (d["Flower (A)"]/d["Total Yield (G)"])*100 : 0)); });
+                return Object.values(map).filter(m => m.vals.length >= minBatchCount).map(m => {
+                    const avg = m.vals.reduce((a,b) => a+b, 0) / m.vals.length;
+                    const squareDiffs = m.vals.map(v => Math.pow(v - avg, 2));
+                    const stdDev = Math.sqrt(squareDiffs.reduce((a,b) => a+b, 0) / squareDiffs.length);
+                    return { name: m.name, x: Number(avg.toFixed(1)), y: Number(stdDev.toFixed(1)), count: m.vals.length };
+                });
+            }, [data, consistencyMetric, minBatchCount]);
+
+            // --- HALL OF FAME ---
+            const hallOfFame = useMemo(() => {
+                if (data.length === 0) return null;
+                const bestYield = [...data].sort((a,b) => b["Flower (A)"] - a["Flower (A)"])[0];
+                const bestGpl = [...data].sort((a,b) => b["Grams per Light"] - a["Grams per Light"])[0];
+                const bestQuality = [...data].filter(d => d["Total Yield (G)"] > 1000).map(d => ({...d, qRatio: (d["Flower (A)"] / d["Total Yield (G)"])})).sort((a,b) => b.qRatio - a.qRatio)[0];
+                const bestRevenue = [...data].map(d => ({ ...d, rev: (d["Flower (A)"] * (strainPrices[d["Strain Name"]] || prices.flowerA)) + (d["Smalls (B)"] * prices.smallsB) + (d["Trim (C)"] * prices.trimC) })).sort((a,b) => b.rev - a.rev)[0];
+                const bestROI = [...data].map(d => { const rev = (d["Flower (A)"] * (strainPrices[d["Strain Name"]] || prices.flowerA)) + (d["Smalls (B)"] * prices.smallsB) + (d["Trim (C)"] * prices.trimC); const cost = d["Lights"] * parseFloat(computedOpexPerLight); return { ...d, roi: cost > 0 ? (rev - cost)/cost : 0 }; }).sort((a,b) => b.roi - a.roi)[0];
+                return {
+                    yield: { val: ((bestYield["Flower (A)"]/1000)*KG_TO_LB).toFixed(1), total: ((bestYield["Total Yield (G)"]/1000)*KG_TO_LB).toFixed(1), room: bestYield["Room ID"], cycle: bestYield["Cycle ID"], strain: bestYield["Strain Name"] },
+                    gpl: { val: bestGpl["Grams per Light"], room: bestGpl["Room ID"], cycle: bestGpl["Cycle ID"], strain: bestGpl["Strain Name"] },
+                    quality: { val: (bestQuality.qRatio * 100).toFixed(1), room: bestQuality["Room ID"], cycle: bestQuality["Cycle ID"], strain: bestQuality["Strain Name"] },
+                    revenue: bestRevenue ? { val: Math.round(bestRevenue.rev).toLocaleString(), room: bestRevenue["Room ID"], cycle: bestRevenue["Cycle ID"], strain: bestRevenue["Strain Name"] } : null,
+                    roi: bestROI ? { val: (bestROI.roi * 100).toFixed(0), room: bestROI["Room ID"], cycle: bestROI["Cycle ID"], strain: bestROI["Strain Name"] } : null
+                };
+            }, [data, prices, strainPrices, computedOpexPerLight]);
+
+            const setPriceFromUnit = (val, unit, key) => {
+                let gramPrice = val;
+                if (unit === 'lb') gramPrice = val / 453.592;
+                else if (unit === 'oz') gramPrice = val / 28.3495;
+                else if (unit === 'eighth') gramPrice = val / 3.5436;
+                setPrices({...prices, [key]: gramPrice});
+            };
+            
+            const handleTargetChange = (terp, val) => {
+                setTerpTargets(prev => ({...prev, [terp]: Number(val)}));
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-100 transition-all duration-500 pb-32">
+                    {/* Header */}
+                    <div className="sticky top-0 z-[100] bg-slate-900 border-b border-slate-800 px-4 py-3 shadow-xl bg-gradient-to-r from-slate-900 to-slate-950">
+                        <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 shrink-0">
+                                <div className="flex items-center gap-3 pr-3 border-r border-slate-800 shrink-0">
+                                    <div className="bg-emerald-600 p-1.5 rounded-xl text-white shadow-md"><Icons.Globe /></div>
+                                    <div className="flex flex-col leading-none"><h1 className="text-[12px] font-black italic uppercase tracking-tighter">Cultivation Intel</h1><div className="flex items-center gap-1.5 mt-1 leading-none"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><p className="text-[10px] font-black uppercase text-slate-400">SYNC: {lastSync || 'Pending'}</p></div></div>
+                                </div>
+                                <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700">
+                                    <button onClick={() => setDataSource('live')} className={`px-2 py-1 text-[9px] font-black uppercase rounded-md transition-all ${dataSource === 'live' ? 'bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-500 hover:text-slate-300'}`}>Live</button>
+                                    <button onClick={() => setDataSource('sample')} className={`px-2 py-1 text-[9px] font-black uppercase rounded-md transition-all ${dataSource === 'sample' ? 'bg-slate-700 shadow-sm text-emerald-500' : 'text-slate-400 hover:text-slate-300'}`}>Demo</button>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mask-gradient flex-1 justify-center">
+                                <MultiSelect label="Cyc" options={cycleOptions} selected={selectedCycle} onChange={setSelectedCycle} />
+                                <MultiSelect label="Rm" options={roomOptions} selected={selectedRoom} onChange={setSelectedRoom} />
+                                <MultiSelect label="Str" options={strainOptions} selected={selectedStrain} onChange={setSelectedStrain} />
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button onClick={() => setShowEntryModal(true)} className="bg-emerald-600 text-white p-2 rounded-xl shadow-md hover:bg-emerald-700 active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase transition-all"><Icons.Plus /> Entry</button>
+                                <button onClick={() => autoFetch(fetchLink)} className={`p-2 rounded-xl transition-all shadow-md bg-slate-800 hover:bg-slate-700 text-white`}><Icons.Refresh animate={isLoading} /></button>
+                                <button onClick={() => setShowSettingsModal(true)} className={`p-2 rounded-xl transition-all shadow-md bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white`}><Icons.Settings /></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-screen-2xl mx-auto p-4 md:p-8 text-center flex flex-col gap-12">
+                        {/* REVENUE VELOCITY CARD */}
+                        <div className="p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group text-left relative bg-gradient-to-br from-emerald-900/40 via-slate-900 to-slate-900 border border-emerald-500/30">
+                            <div className="absolute top-0 right-0 p-9 opacity-10 pointer-events-none"><Icons.Dollar /></div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                <div className="col-span-1 border-r border-slate-800 pr-8">
+                                    <p className="text-[12px] font-black text-slate-500 uppercase tracking-widest mb-1">Net Profit (Est)</p>
+                                    <h3 className={`text-[42px] font-black tracking-tighter leading-none ${parseFloat(String(stats.netProfit).replace(/,/g,'')) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>${stats.netProfit}</h3>
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${parseFloat(stats.profitMargin) > 0 ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}`}>{stats.profitMargin}% Margin</span>
+                                        <div className="group/opex relative cursor-help">
+                                            <span className="text-[10px] font-bold text-slate-500 underline decoration-dotted">OpEx: -${stats.opexTotal}</span>
+                                            <div className="absolute bottom-full left-0 mb-2 w-48 p-3 bg-slate-800 rounded-xl border border-slate-700 shadow-xl text-[10px] font-bold text-slate-300 opacity-0 group-hover/opex:opacity-100 pointer-events-none transition-opacity z-50">Operational Expenses are subtracted from Revenue. Configured in Settings.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-span-1 md:col-span-3 flex flex-col justify-center">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        <div><p className="text-[10px] font-black text-slate-500 uppercase mb-1">Gross Revenue</p><p className="text-2xl font-bold text-white">${stats.revenue}</p></div>
+                                        <div><p className="text-[10px] font-black text-slate-500 uppercase mb-1">Flower Rev</p><p className="text-2xl font-bold text-emerald-500">${stats.revA}</p></div>
+                                        <div><p className="text-[10px] font-black text-slate-500 uppercase mb-1">Byproduct Rev</p><p className="text-2xl font-bold text-blue-400">${(parseFloat(String(stats.revB).replace(/,/g,'')) + parseFloat(String(stats.revC).replace(/,/g,''))).toLocaleString()}</p></div>
+                                        <div><p className="text-[10px] font-black text-slate-500 uppercase mb-1">Rev / Light</p><p className="text-2xl font-bold text-purple-400">${stats.rpl}</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* KPI GRID */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                            <div className={`p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 border border-emerald-500/20`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
+                                    <div><p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-emerald-500">Net Usable Harvest</p><h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.totalLb}<span className="text-[17px] font-normal text-slate-400 ml-1 italic text-[16px]">lb</span></h3><p className="text-[11px] font-bold text-slate-500/60 mt-2 uppercase tracking-wide">({stats.totalG}g total)</p></div><div className="p-5 rounded-2xl bg-emerald-500 text-white shadow-lg"><Icons.Scale /></div>
+                                </div>
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
+                                    {[{ l: 'FLOWER (A)', v: stats.flowerA_Lb, g: stats.flowerA_G, c: 'text-emerald-500', bg: 'bg-emerald-500/10' }, { l: 'SMALLS (B)', v: stats.smallsB_Lb, g: stats.smallsB_G, c: 'text-blue-500', bg: 'bg-blue-500/10' }, { l: 'TRIM (C)', v: stats.trimC_Lb, g: stats.trimC_G, c: 'text-amber-600', bg: 'bg-amber-500/10' }].map(b => ( <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}><p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p><div className="text-right leading-none"><p className={`text-[15px] font-black ${b.c}`}>{b.v}lb</p><p className="text-[10px] font-bold text-slate-500/60 mt-1 uppercase">({b.g}g)</p></div></div> ))}
+                                </div>
+                            </div>
+                            <div className={`p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group bg-gradient-to-br from-blue-500/10 via-slate-900 to-slate-900 border border-blue-500/20`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
+                                    <div><p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-blue-500">Efficiency (GPL)</p><h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.gpl}<span className="text-[16px] font-normal text-slate-400 ml-1 italic text-[16px]">GPL</span></h3><p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Industrial Density</p></div><div className="p-5 rounded-2xl bg-blue-500 text-white shadow-lg"><Icons.Zap /></div>
+                                </div>
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
+                                    {[{ l: 'FLOWER GPL', v: stats.flowerGpl, c: 'text-emerald-600', bg: 'bg-emerald-500/10' }, { l: 'SMALLS GPL', v: stats.smallsGpl, c: 'text-blue-500', bg: 'bg-blue-500/10' }, { l: 'TRIM GPL', v: stats.trimGpl, c: 'text-amber-600', bg: 'bg-amber-500/10' }].map(b => ( <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}><p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p><p className={`text-[16px] font-black ${b.c}`}>{b.v} GPL</p></div> ))}
+                                </div>
+                            </div>
+                            <div className={`p-9 rounded-[3rem] shadow-sm performance-card overflow-hidden group bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/20`}>
+                                <div className="flex justify-between items-start mb-8 leading-none">
+                                    <div><p className="text-slate-400 text-[12px] font-black uppercase tracking-widest mb-1 group-hover:text-amber-500">Flower %</p><h3 className="text-[38px] font-black tracking-tighter italic leading-none text-slate-100">{stats.quality}<span className="text-[16px] font-normal text-slate-400 ml-1 italic text-[16px]">%</span></h3><p className="text-[13px] font-bold text-slate-500 mt-2 uppercase tracking-wide">Goal: {targetQuality}%</p></div><div className="p-5 rounded-2xl bg-amber-500 text-white shadow-lg"><Icons.Award /></div>
+                                </div>
+                                <div className="space-y-5 border-t border-slate-800 pt-8">
+                                    {[{ l: 'FLOWER %', v: stats.quality, c: 'text-emerald-600', bg: 'bg-emerald-500/10' }, { l: 'SMALLS %', v: stats.smallsRatio, c: 'text-blue-500', bg: 'bg-blue-500/10' }, { l: 'TRIM %', v: stats.trimRatio, c: 'text-amber-600', bg: 'bg-amber-500/10' }].map(b => ( <div key={b.l} className={`flex items-center justify-between p-4 rounded-2xl ${b.bg} border border-slate-800 shadow-sm`}><p className="text-[11px] font-black text-slate-400 tracking-tighter uppercase">{b.l}</p><p className={`text-[15px] font-black ${b.c}`}>{b.v}%</p></div> ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* COMPARATOR (3x3 Grid) */}
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden mb-8 bg-gradient-to-br from-purple-500/10 via-slate-900 to-slate-900 border border-purple-500/20">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
+                                <div className="flex items-center gap-5"><div className="bg-purple-500/10 p-4 rounded-2xl text-purple-400"><Icons.Scale /></div><div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Performance Face-Off</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Multi-Select Analysis (Up to 9)</p></div></div>
+                                <div className="flex flex-wrap items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                    <button onClick={() => { setCompMode('cycle'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'cycle' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Cycle</button>
+                                    <button onClick={() => { setCompMode('room'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'room' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Room</button>
+                                    <button onClick={() => { setCompMode('batch'); setCompSelections([{ id: 1, cycle: '', room: '' }, { id: 2, cycle: '', room: '' }]); }} className={`px-4 py-2 text-[12px] font-black uppercase rounded-xl transition-all ${compMode === 'batch' ? 'bg-slate-600 text-white shadow' : 'text-slate-500'}`}>Batch</button>
+                                    <div className="h-6 w-px bg-slate-700 mx-2"></div>
+                                    <button onClick={addComparison} className="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white transition-colors" disabled={compSelections.length >= 9}><Icons.Plus /></button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {computedComparisons.map((item, index) => (
+                                    <div key={item.id} className="bg-slate-900/50 rounded-3xl p-6 border border-slate-800/60 relative group">
+                                        {compSelections.length > 2 && <button onClick={() => removeComparison(item.id)} className="absolute top-4 right-4 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-slate-900 rounded-xl border border-slate-800"><Icons.Trash /></button>}
+                                        <div className="flex flex-col gap-4 mb-8">
+                                            <div className="flex items-center gap-2 mb-2"><div className={`w-2 h-2 rounded-full ${index % 2 === 0 ? 'bg-emerald-500' : 'bg-blue-500'}`}></div><p className={`text-[11px] font-black uppercase tracking-widest ${index % 2 === 0 ? 'text-emerald-500' : 'text-blue-500'}`}>Selection {index + 1}</p></div>
+                                            {(compMode === 'cycle' || compMode === 'batch') && <select className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all" value={item.cycle} onChange={(e) => updateComparison(item.id, 'cycle', e.target.value)}><option value="">Select Cycle...</option>{cycleOptions.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}</select>}
+                                            {(compMode === 'room' || (compMode === 'batch' && item.cycle)) && <select className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-white outline-none focus:border-emerald-500 transition-all" value={item.room} onChange={(e) => updateComparison(item.id, 'room', e.target.value)}><option value="">Select Room...</option>{roomOptions.filter(r => r !== 'All').map(r => <option key={r} value={r}>{r}</option>)}</select>}
+                                        </div>
+                                        {item.stats ? (
+                                            <div className="space-y-6">
+                                                <div><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Flower Yield</p><p className={`text-[32px] font-black leading-none ${parseFloat(item.stats.flowerLb) === compMaxValues.flowerLb ? 'text-emerald-400' : 'text-white'}`}>{item.stats.flowerLb} <span className="text-[14px] text-slate-500 font-bold">lb</span></p><p className="text-[11px] font-bold text-slate-600 mt-1 uppercase">Total: {item.stats.yieldLb} lb</p></div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Efficiency</p><p className={`text-[18px] font-black ${parseFloat(item.stats.gpl) === compMaxValues.gpl ? 'text-blue-400' : 'text-slate-300'}`}>{item.stats.gpl} GPL</p></div>
+                                                    <div><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Flower %</p><p className={`text-[18px] font-black ${parseFloat(item.stats.quality) === compMaxValues.quality ? 'text-amber-400' : 'text-slate-300'}`}>{item.stats.quality}%</p></div>
+                                                </div>
+                                                <div className="pt-6 border-t border-slate-800"><p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Revenue Performance</p><div className="flex justify-between items-end"><p className={`text-[20px] font-black ${parseFloat(item.stats.rpl) === compMaxValues.rpl ? 'text-purple-400' : 'text-slate-400'}`}>${item.stats.rpl}/L</p><p className="text-[11px] font-bold text-slate-600">${Math.round(item.stats.revenue / 1000)}k</p></div></div>
+                                            </div>
+                                        ) : <div className="h-48 flex items-center justify-center text-slate-600 text-[12px] font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-800 rounded-2xl">Select...</div>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {hallOfFame && (
+                            <div className="p-10 rounded-[3rem] bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20 text-left relative overflow-hidden mb-8">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-8 leading-none">
+                                    <div className="flex items-center gap-5"><div className="bg-amber-500 p-4 rounded-2xl text-white shadow-lg shadow-amber-500/20"><Icons.Trophy /></div><div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">The Hall of Fame</h2><p className="text-slate-400 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">All-Time Facility Records</p></div></div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800"><p className="text-[11px] font-black text-amber-500 uppercase tracking-widest mb-2">Highest Flower Yield</p><p className="text-[32px] font-black text-white italic tracking-tighter">{hallOfFame.yield.val} <span className="text-lg text-slate-500 not-italic">lb</span></p><p className="text-[10px] font-bold text-slate-500 mt-1 uppercase mb-3">Total: {hallOfFame.yield.total} lb</p><p className="text-xs text-slate-400 border-t border-slate-800 pt-3 font-bold uppercase">{hallOfFame.yield.strain} <span className="text-slate-600">|</span> {hallOfFame.yield.room} <span className="text-slate-600">|</span> {hallOfFame.yield.cycle}</p></div>
+                                    <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800"><p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2">Most Efficient Run</p><p className="text-[32px] font-black text-white italic tracking-tighter">{hallOfFame.gpl.val} <span className="text-lg text-slate-500 not-italic">GPL</span></p><p className="text-[10px] font-bold text-slate-500 mt-1 uppercase mb-3 opacity-0">Spacer</p><p className="text-xs text-slate-400 border-t border-slate-800 pt-3 font-bold uppercase">{hallOfFame.gpl.strain} <span className="text-slate-600">|</span> {hallOfFame.gpl.room} <span className="text-slate-600">|</span> {hallOfFame.gpl.cycle}</p></div>
+                                    <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800"><p className="text-[11px] font-black text-emerald-400 uppercase tracking-widest mb-2">Highest Flower %</p><p className="text-[32px] font-black text-white italic tracking-tighter">{hallOfFame.quality.val}<span className="text-lg text-slate-500 not-italic">%</span></p><p className="text-[10px] font-bold text-slate-500 mt-1 uppercase mb-3 opacity-0">Spacer</p><p className="text-xs text-slate-400 border-t border-slate-800 pt-3 font-bold uppercase">{hallOfFame.quality.strain} <span className="text-slate-600">|</span> {hallOfFame.quality.room} <span className="text-slate-600">|</span> {hallOfFame.quality.cycle}</p></div>
+                                    {hallOfFame.revenue && <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800"><p className="text-[11px] font-black text-purple-400 uppercase tracking-widest mb-2">Highest Revenue Batch</p><p className="text-[32px] font-black text-white italic tracking-tighter">${hallOfFame.revenue.val}</p><p className="text-[10px] font-bold text-slate-500 mt-1 uppercase mb-3">{hallOfFame.roi ? `ROI: ${hallOfFame.roi.val}%` : ''}</p><p className="text-xs text-slate-400 border-t border-slate-800 pt-3 font-bold uppercase">{hallOfFame.revenue.strain} <span className="text-slate-600">|</span> {hallOfFame.revenue.room} <span className="text-slate-600">|</span> {hallOfFame.revenue.cycle}</p></div>}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left bg-gradient-to-br from-blue-500/10 via-slate-900 to-slate-900 border border-blue-500/20">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Strain Consistency Matrix</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">{consistencyMetric === 'yield' ? 'Yield Reliability (GPL)' : 'Quality Reliability (Flower %)'} (Lower Y is Better)</p></div>
+                                <div className="flex items-center gap-4 bg-slate-900 p-2 rounded-2xl border border-slate-800">
+                                    <div className="flex gap-2"><button onClick={() => setConsistencyMetric('yield')} className={`px-4 py-2 rounded-xl text-xs font-bold ${consistencyMetric === 'yield' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Yield</button><button onClick={() => setConsistencyMetric('quality')} className={`px-4 py-2 rounded-xl text-xs font-bold ${consistencyMetric === 'quality' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}>Quality</button></div>
+                                    <div className="h-6 w-px bg-slate-700"></div>
+                                    <div className="flex items-center gap-2 px-2"><span className="text-[10px] font-bold text-slate-500 uppercase">Min Runs:</span><select value={minBatchCount} onChange={e => setMinBatchCount(Number(e.target.value))} className="bg-slate-950 text-white text-xs font-bold rounded-lg border border-slate-700 px-2 py-1 outline-none">{[2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}+</option>)}</select></div>
+                                    <div className="p-2 bg-slate-800 rounded-xl text-slate-400 ml-2"><Icons.Target /></div>
+                                </div>
+                            </div>
+                            <div className="h-[450px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ScatterChart margin={{ top: 20, right: 40, bottom: 20, left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#475569" opacity={0.3} />
+                                        <XAxis type="number" dataKey="x" name="Avg" unit={consistencyMetric === 'yield' ? " GPL" : "%"} domain={['auto', 'auto']} tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} label={{ value: consistencyMetric === 'yield' ? 'AVERAGE GPL' : 'AVERAGE FLOWER %', position: 'insideBottom', offset: -5, fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
+                                        <YAxis type="number" dataKey="y" name="Consistency" domain={['auto', 'auto']} tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} label={{ value: 'VARIABILITY (STD DEV)', angle: -90, position: 'insideLeft', fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
+                                        <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => { if (active && payload && payload.length) { const d = payload[0].payload; return ( <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl border border-slate-800 text-left"><p className="text-[13px] font-black text-emerald-400 uppercase tracking-widest mb-2">{d.name}</p><p className="text-[12px] font-bold text-slate-300">Avg: {d.x} {consistencyMetric === 'yield' ? 'GPL' : '%'}</p><p className="text-[12px] font-bold text-slate-500">+/- {d.y}</p><p className="text-[10px] mt-2 italic text-slate-600">Based on {d.count} runs</p></div> ); } return null; }} />
+                                        <Scatter name="Strains" data={consistencyData}>{consistencyData.map((entry, index) => <Cell key={index} fill={entry.y < 15 ? '#10b981' : entry.y < 35 ? '#f59e0b' : '#f43f5e'} />)}</Scatter>
+                                    </ScatterChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-900 border border-cyan-500/20">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8 leading-none">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Batch Strategy Map</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Efficiency vs Flower Grade (Hover dots for Contextual Batch Data)</p></div>
+                            </div>
+                            <div className="h-[500px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ScatterChart margin={{ top: 20, right: 40, bottom: 20, left: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#475569" opacity={0.3} />
+                                        <XAxis type="number" dataKey="x" name="Efficiency" unit="GPL" domain={['auto', 'auto']} tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} label={{ value: 'GPL', position: 'insideBottom', offset: -5, fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
+                                        <YAxis type="number" dataKey="y" name="Quality" unit="%" tick={{fontSize: 13, fontWeight: 900, fill: '#cbd5e1'}} domain={['auto', 'auto']} label={{ value: 'FLOWER %', angle: -90, position: 'insideLeft', fontSize: 13, fontWeight: 900, fill: '#cbd5e1' }} />
+                                        <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => { if (active && payload && payload.length) { const d = payload[0].payload; return ( <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl border border-slate-800 text-left min-w-[200px]"><p className="text-[13px] font-black text-emerald-400 uppercase tracking-widest mb-2">{d.name}</p><div className="space-y-1.5"><p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold">Cycle:</span> <span className="font-bold text-white">{d.cycle}</span></p><p className="text-[12px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold">Room:</span> <span className="font-bold text-white">{d.room}</span></p><p className="text-[12px] flex justify-between gap-6 border-t border-white/10 pt-2 mt-2 font-black"><span className="text-slate-500 uppercase">EFFICIENCY:</span> <span className="text-blue-400 bg-blue-500/20 px-1 rounded">{d.x} GPL</span></p><p className="text-[12px] flex justify-between gap-6 font-black"><span className="text-slate-500 uppercase">DENSITY:</span> <span className="text-white">{d.lpl} LPL</span></p><p className="text-[12px] flex justify-between gap-6 font-black"><span className="text-slate-500 uppercase">FLOWER %:</span> <span className="text-amber-400">{d.y}%</span></p></div></div> ); } return null; }} />
+                                        <Scatter name="Batches" data={scatterData}>{scatterData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} fillOpacity={0.6} />)}</Scatter>
+                                        <ReferenceLine x={100} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" label={{ value: '100 GPL', position: 'top', fill: '#10b981', fontSize: 13, fontWeight: 900 }} />
+                                        <ReferenceLine y={targetQuality} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" label={{ value: `${targetQuality}% TARGET`, position: 'right', fill: '#f59e0b', fontSize: 13, fontWeight: 900 }} />
+                                    </ScatterChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* HARVEST FORECASTER & OPTIMIZER */}
+                        <div className="p-11 rounded-[3.5rem] bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 border border-emerald-500/20 text-left relative overflow-hidden">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-8 leading-none">
+                                <div className="flex items-center gap-5"><div className="bg-emerald-600 p-4 rounded-2xl text-white shadow-lg"><Icons.Calculator /></div><div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Production Optimizer</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Room-by-Room Scheduler with Target Mix</p></div></div>
+                            </div>
+                            <div className="grid grid-cols-1 gap-12">
+                                <div>
+                                    <div className="flex flex-wrap gap-8 mb-8 border-b border-slate-800 pb-8">
+                                        <div className="flex-1 min-w-[300px] space-y-4">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Priority Balance</label>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-bold text-slate-400">Yield</span>
+                                                <input type="range" min="0" max="100" value={optimizeWeight} onChange={(e) => setOptimizeWeight(Number(e.target.value))} className="flex-1 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer" />
+                                                <span className="text-[10px] font-bold text-emerald-400">Profit</span>
+                                            </div>
+                                            <div className="flex gap-4">
+                                                 <div className="space-y-1"><label className="text-[9px] font-bold text-slate-500 uppercase">Max Plants/Strain (Default)</label><input type="number" value={defaultMaxPlants} onChange={(e) => setDefaultMaxPlants(Number(e.target.value))} className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-white w-24"/></div>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-[300px] space-y-4">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Target Portfolio Mix (%)</label>
+                                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                                {TERPENE_PROFILES.slice(0, 8).map(terp => (
+                                                    <div key={terp} className="flex justify-between items-center text-xs">
+                                                        <span className="text-slate-400 truncate w-32" title={terp}>{terp.split(' ')[0]}</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <input type="number" min="0" max="100" value={terpTargets[terp] || ''} onChange={e => handleTargetChange(terp, e.target.value)} className="bg-slate-950 border border-slate-700 rounded-md w-12 text-center text-white" placeholder="0" />
+                                                            <span className="text-slate-600">%</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-950/50 rounded-3xl overflow-hidden border border-slate-800 mb-6">
+                                        <SortableTable 
+                                            columns={[
+                                                { key: 'room', label: 'Room Allocation', align: 'left', color: () => 'text-white' },
+                                                { key: 'strain', label: 'Suggested Strain', align: 'left', color: () => 'text-emerald-400' },
+                                                { key: 'terpene', label: 'Profile', align: 'left', color: () => 'text-slate-500 text-xs' },
+                                                { key: 'plants', label: 'Plant Count', align: 'right', color: () => 'text-slate-300' },
+                                                { key: 'estYield', label: 'Est. Yield', align: 'right', color: () => 'text-slate-300' },
+                                                { key: 'estProfit', label: 'Est. Profit', align: 'right', color: () => 'text-emerald-400', format: v => `$${parseInt(v).toLocaleString()}` }
+                                            ]}
+                                            data={optimizerPlan}
+                                            showTotals={true}
+                                        />
+                                        {optimizerPlan.length === 0 && <div className="p-6 text-center text-slate-600 text-xs font-bold uppercase">Configure Rooms in Settings to generate plan</div>}
+                                    </div>
+
+                                    {/* Terpene Target Visualization */}
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        {['Gas', 'Fruit', 'Earth', 'Floral', 'Spice'].map(terp => {
+                                            const count = optimizerPlan.filter(r => r.terpene && r.terpene.includes(terp.split(' ')[0])).reduce((acc, r) => acc + r.plants, 0);
+                                            const total = optimizerPlan.reduce((acc, r) => acc + r.plants, 0);
+                                            const pct = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
+                                            const target = terpTargets[TERPENE_PROFILES.find(t => t.includes(terp.split(' ')[0]))] || 0;
+                                            return (
+                                                <div key={terp} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{terp}</p>
+                                                    <p className={`text-xl font-black ${pct > 0 ? 'text-white' : 'text-slate-700'}`}>{pct}%</p>
+                                                    {target > 0 && <p className="text-[9px] text-slate-500">Target: {target}%</p>}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* FACILITY LEADERBOARD */}
+                        <div className="p-14 rounded-[3.5rem] performance-card text-left relative overflow-hidden bg-gradient-to-br from-indigo-500/10 via-slate-900 to-slate-900 border border-indigo-500/20">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 leading-none gap-8">
+                                <div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Facility Power Leaderboard</h2><p className="text-slate-500 text-[13px] font-black uppercase tracking-widest mt-3 italic leading-none">Room Rankings by Operational Performance Score</p></div>
+                                <div className="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-sm">
+                                    <div className="flex bg-slate-900 rounded-xl p-1 mr-2"><button onClick={() => setLeaderboardTime('all')} className={`text-[10px] font-bold px-3 py-1 rounded-lg transition-colors ${leaderboardTime === 'all' ? 'bg-slate-700 text-white' : 'text-slate-500'}`}>All Time</button><button onClick={() => setLeaderboardTime('recent')} className={`text-[10px] font-bold px-3 py-1 rounded-lg transition-colors ${leaderboardTime === 'recent' ? 'bg-slate-700 text-white' : 'text-slate-500'}`}>Last 5</button></div>
+                                    <span className="text-[12px] font-black text-slate-400 uppercase px-2 tracking-widest">Sort:</span>
+                                    <button onClick={() => setLeaderboardSort('gpl')} className={`px-4 py-2 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'gpl' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>GPL</button>
+                                    <button onClick={() => setLeaderboardSort('yield')} className={`px-4 py-2 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'yield' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>Yield</button>
+                                    <button onClick={() => setLeaderboardSort('rpl')} className={`px-4 py-2 text-[11px] font-black uppercase rounded-xl transition-all ${leaderboardSort === 'rpl' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}>$/Light</button>
+                                </div>
+                            </div>
+                            <div className="h-[500px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart layout="vertical" data={roomBenchmark} margin={{ left: 50, right: 120 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#475569" opacity={0.3} />
+                                        <XAxis type="number" domain={['auto', 'auto']} tick={{fontSize: 12, fontWeight: 900, fill: '#64748b'}} />
+                                        <YAxis dataKey="name" type="category" tick={{fontSize: 17, fontStyle: 'italic', fontWeight: 900, fill: '#f1f5f9'}} width={100} axisLine={false} tickLine={false} />
+                                        <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} content={({active, payload}) => { if (active && payload && payload.length) { const d = payload[0].payload; return ( <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-slate-800 min-w-[240px] text-left"><div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3 leading-none"><Icons.Crown /><p className="text-sm font-black uppercase tracking-widest">{d.name}</p></div><div className="space-y-2 leading-none mt-4"><p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Efficiency:</span> <span className="font-black text-blue-400">{d.gpl} GPL</span></p><p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Rev / Light:</span> <span className="font-black text-emerald-400">${d.revPerLight}</span></p><p className="text-[13px] flex justify-between gap-6 uppercase"><span className="text-slate-400 font-bold tracking-widest">Total Yield:</span> <span className="font-black text-purple-400">{d.yield} lb</span></p></div></div> ); } return null; }}/>
+                                        <ReferenceLine x={100} stroke="#10b981" strokeDasharray="5 5" label={{ value: 'GOAL: 100 GPL', position: 'top', fill: '#10b981', fontSize: 13, fontWeight: 900 }} />
+                                        <Bar dataKey="sortVal" name="Score" radius={[0, 20, 20, 0]} barSize={50}>{roomBenchmark.map((entry, i) => ( <Cell key={i} fill={ i === 0 ? '#10b981' : entry.sortVal > (leaderboardSort === 'mix' ? 75 : 90) ? '#3b82f6' : entry.sortVal > (leaderboardSort === 'mix' ? 50 : 60) ? '#f59e0b' : '#f43f5e' } /> ))}</Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* CYCLE BREAKDOWN LIST */}
+                        <div className="p-11 rounded-[3.5rem] performance-card text-left relative overflow-hidden mb-8 bg-gradient-to-br from-slate-700/20 via-slate-900 to-slate-900 border border-slate-700/30">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-8 leading-none">
+                                <div className="flex items-center gap-5"><div className="bg-blue-500/10 p-4 rounded-2xl text-blue-500"><Icons.List /></div><div><h2 className="text-[28px] font-black italic uppercase tracking-tighter leading-none text-slate-100">Cycle History Detail</h2><p className="text-slate-500 text-[14px] font-black uppercase tracking-widest mt-3 italic leading-none">Expand cycles to view individual room performance</p></div></div>
+                            </div>
+                            <div className="space-y-4">
+                                {cycleBreakdown.map(cycle => (
+                                    <div key={cycle.id} className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden transition-all hover:border-slate-700">
+                                        <div onClick={() => setExpandedCycle(expandedCycle === cycle.id ? null : cycle.id)} className="p-6 flex flex-wrap items-center justify-between cursor-pointer group hover:bg-slate-800/50 transition-colors">
+                                            <div className="flex items-center gap-6">
+                                                <div className={`p-3 rounded-xl transition-colors ${expandedCycle === cycle.id ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 group-hover:text-white'}`}><Icons.Chevron /></div>
+                                                <div><p className="text-[12px] font-black text-slate-500 uppercase tracking-widest">Cycle</p><h3 className="text-[24px] font-black text-slate-200">{cycle.id}</h3></div>
+                                            </div>
+                                            <div className="flex items-center gap-8 md:gap-16">
+                                                <div className="text-right"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Flower Yield</p><p className="text-[18px] font-black text-emerald-400">{cycle.flowerLb} lb</p></div>
+                                                <div className="text-right"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Yield</p><p className="text-[18px] font-black text-slate-200">{cycle.yieldLb} lb</p></div>
+                                                <div className="text-right"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg Efficiency</p><p className={`text-[18px] font-black ${cycle.gpl >= 100 ? 'text-emerald-400' : 'text-blue-400'}`}>{cycle.gpl} GPL</p></div>
+                                                <div className="text-right hidden sm:block"><p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg Flower %</p><p className={`text-[18px] font-black ${cycle.quality >= targetQuality ? 'text-emerald-400' : 'text-amber-500'}`}>{cycle.quality}%</p></div>
+                                                <div className={`transform transition-transform duration-300 text-slate-500 ${expandedCycle === cycle.id ? 'rotate-180' : ''}`}><Icons.Chevron /></div>
+                                            </div>
+                                        </div>
+                                        {expandedCycle === cycle.id && (
+                                            <div className="border-t border-slate-800 bg-slate-950/30 p-6 animate-in slide-in-from-top-2 duration-200">
+                                                <div className="mb-8"><h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Strain Totals</h4>
+                                                    <SortableTable 
+                                                        columns={[
+                                                            { key: 'name', label: 'Strain', align: 'left', color: () => 'text-emerald-400' },
+                                                            { key: 'flowerLb', label: 'Flower Yield', align: 'right', format: v => `${v} lb`, color: () => 'text-emerald-300', isNumeric: true },
+                                                            { key: 'yieldLb', label: 'Total Yield', align: 'right', format: v => `${v} lb`, isNumeric: true },
+                                                            { key: 'gpl', label: 'Avg Eff', align: 'right', format: v => `${v} GPL`, color: () => 'text-blue-400', isNumeric: true },
+                                                            { key: 'quality', label: 'Avg Flower %', align: 'right', format: v => `${v}%`, color: () => 'text-amber-500', isNumeric: true }
+                                                        ]}
+                                                        data={cycle.strainsAgg}
+                                                    />
+                                                </div>
+                                                <div className="mb-8"><h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Room Totals</h4>
+                                                    <SortableTable 
+                                                        columns={[
+                                                            { key: 'name', label: 'Room', align: 'left', color: () => 'text-white' },
+                                                            { key: 'strains', label: 'Strain(s)', align: 'left', color: () => 'text-slate-400 text-[11px]' },
+                                                            { key: 'flowerLb', label: 'Flower Yield', align: 'right', format: v => `${v} lb`, color: () => 'text-emerald-300', isNumeric: true },
+                                                            { key: 'yieldLb', label: 'Total Yield', align: 'right', format: v => `${v} lb`, isNumeric: true },
+                                                            { key: 'gpl', label: 'Avg Eff', align: 'right', format: v => `${v} GPL`, color: () => 'text-blue-400', isNumeric: true },
+                                                            { key: 'quality', label: 'Avg Flower %', align: 'right', format: v => `${v}%`, color: () => 'text-amber-500', isNumeric: true }
+                                                        ]}
+                                                        data={cycle.roomsAgg}
+                                                    />
+                                                </div>
+                                                <div><h4 className="text-[13px] font-black text-slate-400 uppercase tracking-widest mb-3">Batch Details</h4>
+                                                    <SortableTable 
+                                                        columns={[
+                                                            { key: 'id', label: 'Room', align: 'left', color: () => 'text-white' },
+                                                            { key: 'strain', label: 'Strain', align: 'left', color: () => 'text-emerald-400' },
+                                                            { key: 'flowerLb', label: 'Flower Yield', align: 'right', format: v => `${v} lb`, color: () => 'text-emerald-300', isNumeric: true },
+                                                            { key: 'yieldLb', label: 'Total Yield', align: 'right', format: v => `${v} lb`, color: () => 'text-slate-500', isNumeric: true },
+                                                            { key: 'gpl', label: 'Efficiency', align: 'right', format: v => `${v} GPL`, color: () => 'text-blue-400', isNumeric: true },
+                                                            { key: 'quality', label: 'Flower %', align: 'right', format: v => `${v}%`, color: () => 'text-amber-500', isNumeric: true }
+                                                        ]}
+                                                        data={cycle.rooms}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SETTINGS MODAL */}
+                    {showSettingsModal && (
+                        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300 flex flex-col">
+                                <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900 z-10">
+                                    <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Configuration</h2>
+                                    <button onClick={() => setShowSettingsModal(false)} className="bg-slate-800 hover:bg-slate-700 p-3 rounded-2xl text-slate-400 hover:text-white transition-colors"><Icons.X /></button>
+                                </div>
+                                <div className="p-8 overflow-y-auto custom-scrollbar flex-1 grid grid-cols-1 md:grid-cols-2 gap-12">
+                                    {/* Left Col: Pricing */}
+                                    <div className="space-y-8">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-3 text-emerald-500"><Icons.Coins /><h3 className="text-sm font-black uppercase tracking-widest">Wholesale Customer Pricing</h3></div>
+                                            <div className="flex bg-slate-950 rounded-lg p-1 border border-slate-800">
+                                                {['gram', 'lb'].map(u => (
+                                                    <button key={u} onClick={() => setInputUnit(u)} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-colors uppercase ${inputUnit === u ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>/{u}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            {[{l: 'Flower (A)', k: 'flowerA'}, {l: 'Smalls (B)', k: 'smallsB'}, {l: 'Trim (C)', k: 'trimC'}].map(p => (
+                                                <div key={p.k} className="flex justify-between items-center">
+                                                    <span className="text-xs font-bold text-slate-400 uppercase">{p.l}</span>
+                                                    <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-32 focus-within:border-emerald-500">
+                                                        <span className="text-slate-500 text-xs mr-2">$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            step="0.01" 
+                                                            value={inputUnit === 'gram' ? prices[p.k] : (prices[p.k] * 453.592).toFixed(2)} 
+                                                            onChange={e => {
+                                                                const val = parseFloat(e.target.value);
+                                                                setPriceFromUnit(isNaN(val) ? 0 : val, inputUnit, p.k);
+                                                            }}
+                                                            className="bg-transparent text-white font-mono font-bold w-full outline-none text-right" 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mb-2 text-purple-400"><Icons.Zap /><h3 className="text-sm font-black uppercase tracking-widest">Extracts & Products</h3></div>
+                                        <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            {[{l: 'BHO ($/g)', k: 'bho'}, {l: 'Rosin ($/g)', k: 'rosin'}, {l: 'Resin Cart 1g', k: 'cart1g'}, {l: 'Resin Disp 1g', k: 'disp1g'}, {l: 'Rosin Cart .5g', k: 'rosinCart05'}, {l: 'Pre-Rolls ($/ea)', k: 'preroll'}].map(p => (
+                                                <div key={p.k} className="flex justify-between items-center"><span className="text-xs font-bold text-slate-400 uppercase">{p.l}</span><div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-28 focus-within:border-purple-500"><span className="text-slate-500 text-xs mr-2">$</span><input type="number" step="0.01" value={prices[p.k]} onChange={e => setPrices({...prices, [p.k]: parseFloat(e.target.value)})} className="bg-transparent text-white font-mono font-bold w-full outline-none text-right" /></div></div>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mb-2 text-white"><Icons.Star /><h3 className="text-sm font-black uppercase tracking-widest">Strain Configuration (Overrides)</h3></div>
+                                        <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+                                            <div className="flex justify-between text-[10px] text-slate-500 uppercase font-black mb-2 px-1"><span>Strain</span><span className="w-16 text-center">Profile</span><span className="w-16 text-center">Price ($)</span><span className="w-16 text-center">Max P.</span></div>
+                                            {strainOptions.filter(s => s !== 'All').map(s => (
+                                                <div key={s} className="flex justify-between items-center border-b border-slate-800/50 pb-2 mb-2 last:border-0">
+                                                    <span className="text-xs font-bold text-emerald-400 truncate flex-1 pr-2">{s}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        {/* Profile Selector */}
+                                                        <select 
+                                                            value={strainProfiles[s] || "Unknown"}
+                                                            onChange={(e) => updateStrainProfile(s, e.target.value)}
+                                                            className="bg-slate-900 border border-slate-700 rounded-lg px-1 py-1 text-[10px] text-white w-24 outline-none"
+                                                        >
+                                                            <option value="Unknown">-</option>
+                                                            {TERPENE_PROFILES.map(t => <option key={t} value={t}>{t.split(' ')[0]}</option>)}
+                                                        </select>
+                                                        {/* Price Input */}
+                                                        <input 
+                                                            type="number" 
+                                                            step="0.01" 
+                                                            placeholder={prices.flowerA.toFixed(2)} 
+                                                            value={strainPrices[s] || ''} 
+                                                            onChange={e => updateStrainPrice(s, e.target.value)} 
+                                                            className="bg-slate-900 border border-slate-700 rounded-lg px-1 py-1 text-[10px] text-white w-16 text-center outline-none" 
+                                                        />
+                                                        {/* Limit Input */}
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder={defaultMaxPlants} 
+                                                            value={strainMaxPlants[s] || ''} 
+                                                            onChange={e => updateStrainLimit(s, e.target.value)} 
+                                                            className="bg-slate-900 border border-slate-700 rounded-lg px-1 py-1 text-[10px] text-white w-14 text-center outline-none" 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Right Col: Expenses & Goals */}
+                                    <div className="space-y-8">
+                                        {/* Room Config */}
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2 text-white"><Icons.List /><h3 className="text-sm font-black uppercase tracking-widest">Room Configurations</h3></div>
+                                            <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                                                {roomConfigs.map(room => (
+                                                    <div key={room.id} className="flex items-center gap-2 mb-2">
+                                                        <input type="text" value={room.name} onChange={(e) => updateRoomConfig(room.id, 'name', e.target.value)} className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white w-20" />
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-1"><span className="text-[9px] text-slate-500 uppercase w-8">Lights:</span><input type="number" value={room.lights} onChange={(e) => updateRoomConfig(room.id, 'lights', parseInt(e.target.value))} className="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-xs text-white w-12 text-center" /></div>
+                                                            <div className="flex items-center gap-1"><span className="text-[9px] text-slate-500 uppercase w-8">Plants:</span><input type="number" value={room.plants} onChange={(e) => updateRoomConfig(room.id, 'plants', parseInt(e.target.value))} className="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-xs text-white w-12 text-center" /></div>
+                                                        </div>
+                                                        <button onClick={() => removeRoomConfig(room.id)} className="text-rose-500 hover:text-rose-400 ml-auto p-2"><Icons.Trash /></button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={addRoomConfig} className="text-xs font-bold text-emerald-500 hover:text-emerald-400 mt-2">+ Add Room</button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mb-2 text-rose-500"><Icons.TrendingUp /><h3 className="text-sm font-black uppercase tracking-widest">Operational Expenses (Per Cycle)</h3></div>
+                                        <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            <div className="flex justify-between items-center pb-4 border-b border-slate-800">
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Active Light Count</span>
+                                                <input type="number" value={totalActiveLights} onChange={e => setTotalActiveLights(Number(e.target.value))} className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-24 text-white font-bold text-right outline-none focus:border-rose-500"/>
+                                            </div>
+                                            <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                                                {expenses.map(exp => (
+                                                    <div key={exp.id} className="flex items-center gap-3">
+                                                        <button onClick={() => removeExpense(exp.id)} className="text-slate-600 hover:text-rose-500"><Icons.Trash /></button>
+                                                        <input type="text" value={exp.name} onChange={e => updateExpense(exp.id, 'name', e.target.value)} className="bg-transparent border-b border-slate-700 text-xs font-bold text-slate-300 w-full outline-none focus:border-rose-500 py-1" />
+                                                        <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 w-24"><span className="text-slate-500 text-[10px] mr-1">$</span><input type="number" value={exp.val} onChange={e => updateExpense(exp.id, 'val', parseFloat(e.target.value))} className="bg-transparent text-white font-mono text-xs font-bold w-full outline-none text-right" /></div>
+                                                    </div>
+                                                ))}
+                                                <button onClick={addExpense} className="text-xs font-bold text-emerald-500 hover:text-emerald-400 flex items-center gap-1 mt-2">+ Add Item</button>
+                                            </div>
+                                            <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
+                                                <span className="text-xs font-black text-rose-400 uppercase tracking-widest">Est. OpEx / Light</span>
+                                                <span className="text-xl font-black text-white">${computedOpexPerLight}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 italic leading-tight">Note: Expenses are standardized to 'Cost Per Light' for consistent benchmarking across facility sizes.</p>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mb-2 text-amber-500"><Icons.Award /><h3 className="text-sm font-black uppercase tracking-widest">Performance Goals</h3></div>
+                                        <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800 space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Target Flower Ratio</span>
+                                                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-24 focus-within:border-amber-500"><input type="number" value={targetQuality} onChange={e => setTargetQuality(parseInt(e.target.value))} className="bg-transparent text-white font-mono font-bold w-full outline-none text-right" /><span className="text-slate-500 text-xs ml-1">%</span></div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Target Efficiency</span>
+                                                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-24 focus-within:border-blue-500"><input type="number" value={targetGpl} onChange={e => setTargetGpl(parseInt(e.target.value))} className="bg-transparent text-white font-mono font-bold w-full outline-none text-right" /><span className="text-slate-500 text-xs ml-1">g</span></div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Target Rev / Light</span>
+                                                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 w-24 focus-within:border-emerald-500"><span className="text-slate-500 text-xs mr-1">$</span><input type="number" value={targetRevPerLight} onChange={e => setTargetRevPerLight(parseInt(e.target.value))} className="bg-transparent text-white font-mono font-bold w-full outline-none text-right" /></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-6 border-t border-slate-800 bg-slate-900 z-10 flex justify-end">
+                                    <button onClick={() => setShowSettingsModal(false)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase px-8 py-4 rounded-2xl transition-all shadow-lg text-sm">Save Configuration</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showEntryModal && (
+                        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[300] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[3.5rem] w-full max-w-5xl h-[92vh] overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                                <div className="absolute top-8 right-8 z-10">
+                                    <button onClick={() => setShowEntryModal(false)} className="bg-slate-100 hover:bg-slate-200 p-4 rounded-3xl text-slate-500 transition-colors shadow-sm"><Icons.X /></button>
+                                </div>
+                                <iframe src={SYSTEM_CONFIG.ENTRY_FORM_LINK} className="w-full h-full border-none" title="Production Entry Form">Loading form...</iframe>
+                            </div>
+                        </div>
+                    )}
                 </div>
-              </div>
-
-               {/* EC Meter Visual */}
-               <div className="flex items-center justify-between border-t border-stone-100 pt-6">
-                <div>
-                  <p className="text-xs text-stone-500 uppercase font-bold">E.C. (mS/cm)</p>
-                  <p className="text-3xl font-mono font-bold text-stone-800">{envData.ec}</p>
-                </div>
-                <div className="text-right">
-                   <p className="text-xs text-stone-400 mb-1">Water Temp</p>
-                   <p className="text-xl font-bold text-blue-600">{envData.waterTemp}°F</p>
-                </div>
-              </div>
-              
-              <button className="w-full mt-auto py-3 rounded-lg bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition-colors">
-                Calibrate Sensors
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Schedule / Logs */}
-        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-stone-700 text-lg">Upcoming Schedule</h3>
-            <button className="text-emerald-600 text-sm font-bold hover:underline">View Full Calendar</button>
-          </div>
-          <div className="space-y-4">
-             {[
-               { time: '06:00 AM', event: 'Lights On', type: 'auto' },
-               { time: '08:00 AM', event: 'Morning Irrigation (1200ml)', type: 'water' },
-               { time: '02:00 PM', event: 'Foliar Spray (IPM)', type: 'manual' },
-               { time: '06:00 PM', event: 'Lights Off', type: 'auto' },
-             ].map((item, idx) => (
-               <div key={idx} className="flex items-center gap-4 p-3 hover:bg-stone-50 rounded-lg transition-colors border-b border-stone-100 last:border-0">
-                 <div className="font-mono text-sm text-stone-500 w-20">{item.time}</div>
-                 <div className={`
-                    w-2 h-2 rounded-full 
-                    ${item.type === 'auto' ? 'bg-purple-400' : item.type === 'water' ? 'bg-blue-400' : 'bg-amber-400'}
-                 `}></div>
-                 <div className="font-medium text-stone-700 flex-1">{item.event}</div>
-                 <span className="text-xs px-2 py-1 bg-stone-100 text-stone-500 rounded uppercase tracking-wider">{item.type}</span>
-               </div>
-             ))}
-          </div>
-        </div>
-
-      </main>
-    </div>
-  );
-};
-
-export default CultivationDashboard;
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
